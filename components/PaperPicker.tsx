@@ -69,7 +69,7 @@ export function PaperPicker({
         onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
       />
 
-      <ul className="max-h-56 divide-y divide-line overflow-y-auto border border-line bg-surface">
+      <ul className="glass max-h-56 divide-y divide-line overflow-y-auto">
         {hits.map((h) => (
           <li key={h.id}>
             <label className="flex cursor-pointer items-center gap-2 px-2 py-1.5 text-sm hover:text-accent">

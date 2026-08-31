@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Chakra_Petch, Rajdhani } from "next/font/google";
 import { supabaseServer } from "@/lib/supabase/server";
+import { Fracture } from "@/components/Fracture";
 
 const chakra = Chakra_Petch({
   subsets: ["latin"],
@@ -34,7 +35,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${chakra.variable} ${rajdhani.variable}`}>
       <body className="min-h-screen antialiased">
-        <header className="border-b border-line bg-surface/80 backdrop-blur">
+        <Fracture />
+        <header className="glass border-x-0 border-t-0">
           <nav className="mx-auto flex max-w-5xl items-center gap-1 px-4 py-4 text-sm">
             <Link href="/" className="logo text-xl">
               Research<span className="text-accent">/</span>db

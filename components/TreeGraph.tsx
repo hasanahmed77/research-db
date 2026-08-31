@@ -264,7 +264,7 @@ export function TreeGraph({
       </div>
 
       {graph ? (
-        <div className="relative h-[calc(100vh-14rem)] min-h-96 overflow-hidden border border-line bg-surface">
+        <div className="glass relative h-[calc(100vh-14rem)] min-h-96 overflow-hidden">
           <div className="absolute right-2 top-2 z-10 flex gap-1">
             <button type="button" className="btn-sm" onClick={() => zoomBy(1.2)} aria-label="zoom in">+</button>
             <button type="button" className="btn-sm" onClick={() => zoomBy(1 / 1.2)} aria-label="zoom out">−</button>
