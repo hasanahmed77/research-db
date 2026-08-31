@@ -28,7 +28,7 @@ const LABEL_W = 160;
 type Link_ = { id: string; rel: string; dir: "→" | "←" };
 type VNode = {
   id: string; rel?: string; dir?: string;
-  hidden: number; children: VNode[];
+  children: VNode[];
   x: number; y: number; anchorX: number;   // anchorX decides which side the label sits
 };
 
@@ -54,20 +54,12 @@ export function TreeGraph({
 
   const [query, setQuery] = useState("");
   const [focus, setFocus] = useState<string | null>(null);
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
     return papers.filter((p) => p.title.toLowerCase().includes(q)).slice(0, 8);
   }, [papers, query]);
-
-  const toggle = (id: string) =>
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
 
   /**
    * Every paper is drawn, exactly once. Linked papers form clusters laid out in
@@ -89,20 +81,19 @@ export function TreeGraph({
     for (const p of linked) {
       if (placed.has(p.id)) continue;
 
-      const rootNode: VNode = { id: p.id, hidden: 0, children: [], x: 0, y: 0, anchorX: 0 };
+      const rootNode: VNode = { id: p.id, children: [], x: 0, y: 0, anchorX: 0 };
       placed.set(p.id, rootNode);
       const queue = [rootNode];
 
       while (queue.length) {
         const cur = queue.shift()!;
-        if (collapsed.has(cur.id)) continue;
         for (const l of adj.get(cur.id) ?? []) {
           const key = [cur.id, l.id].sort().join("|") + "|" + l.rel;
           if (seenEdge.has(key)) continue;
           seenEdge.add(key);
           if (!placed.has(l.id)) {
             const child: VNode = {
-              id: l.id, rel: l.rel, dir: l.dir, hidden: 0, children: [], x: 0, y: 0, anchorX: 0,
+              id: l.id, rel: l.rel, dir: l.dir, children: [], x: 0, y: 0, anchorX: 0,
             };
             placed.set(l.id, child);
             cur.children.push(child);
@@ -128,10 +119,6 @@ export function TreeGraph({
       roots.push(rootNode);
     }
 
-    for (const n of placed.values()) {
-      if (collapsed.has(n.id)) n.hidden = (adj.get(n.id) ?? []).length;
-    }
-
     // labels lean away from the middle of their own cluster
     const applyAnchor = (root: VNode) => {
       const walk = (n: VNode, cx: number) => {
@@ -152,7 +139,7 @@ export function TreeGraph({
     const lonerTop = clusterBottom + (loners.length ? ROW : 0);
     loners.forEach((p, i) => {
       const n: VNode = {
-        id: p.id, hidden: 0, children: [], x: PAD + (i % perRow) * COL + COL / 2,
+        id: p.id, children: [], x: PAD + (i % perRow) * COL + COL / 2,
         y: lonerTop + Math.floor(i / perRow) * 78, anchorX: 0,
       };
       n.anchorX = n.x;                   // no cluster to lean away from: label underneath
@@ -169,7 +156,7 @@ export function TreeGraph({
     );
     const height = Math.max(...flat.map((n) => n.y)) + PAD + 24;
     return { flat, roots, cross, byNode: placed, width, height, loners: loners.length, lonerTop };
-  }, [papers, adj, collapsed]);
+  }, [papers, adj]);
 
   const clip = (t: string, n = 22) => (t.length > n ? t.slice(0, n) + "…" : t);
 
@@ -234,8 +221,8 @@ export function TreeGraph({
               const p = byId.get(n.id);
               if (!p) return null;
               const color = STATUS_COLOR[p.status] ?? "var(--muted)";
-              const hasKids = n.children.length > 0 || n.hidden > 0;
               const lit = focus === n.id;
+              const open = () => router.push(`/papers/${n.id}`);
               const side = n.x - n.anchorX;
               const anchor = Math.abs(side) < 1 ? "middle" : side < 0 ? "end" : "start";
               const tx = anchor === "middle" ? n.x : side < 0 ? n.x - R - 7 : n.x + R + 7;
@@ -254,18 +241,12 @@ export function TreeGraph({
                     fillOpacity={p.is_stub ? 1 : 0.22}
                     stroke={color} strokeWidth={1.8}
                     strokeDasharray={p.is_stub ? "3 2" : undefined}
-                    style={{ cursor: hasKids ? "pointer" : "default" }}
-                    onClick={() => hasKids && toggle(n.id)}
+                    style={{ cursor: "pointer" }}
+                    onClick={open}
                   />
-                  {n.hidden > 0 && (
-                    <text x={n.x} y={n.y + 3.5} textAnchor="middle" fontSize={10}
-                          fill="var(--fg)" style={{ pointerEvents: "none" }}>
-                      {n.hidden}
-                    </text>
-                  )}
                   <text x={tx} y={ty} textAnchor={anchor} fontSize={11}
                         fill={lit ? "var(--accent)" : "var(--fg)"} style={{ cursor: "pointer" }}
-                        onClick={() => router.push(`/papers/${n.id}`)}>
+                        onClick={open}>
                     {clip(p.title)}
                   </text>
                 </g>
@@ -278,7 +259,7 @@ export function TreeGraph({
       )}
 
       <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-        <span>click a circle to collapse it · click a title to open the paper · dashed lines are extra connections</span>
+        <span>click a paper to open it · dashed lines are further connections between papers already drawn</span>
         <span className="ml-auto flex flex-wrap gap-x-3">
           <span style={{ color: "var(--muted)" }}>— cites</span>
           <span style={{ color: "var(--cyan)" }}>— related</span>
