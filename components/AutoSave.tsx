@@ -26,6 +26,7 @@ export function AutoSave({
 }) {
   const form = useRef<HTMLFormElement>(null);
   const dirty = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -34,11 +35,26 @@ export function AutoSave({
     return () => clearTimeout(t);
   }, [saved]);
 
+  // warn if the tab closes with text that never reached the server
+  useEffect(() => {
+    const warn = (e: BeforeUnloadEvent) => { if (dirty.current) e.preventDefault(); };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, []);
+
   const commit = () => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
     if (!dirty.current) return;
     dirty.current = false;
     form.current?.requestSubmit();
     setSaved(true);
+  };
+
+  // blur alone loses a long answer if the tab closes mid-sentence; save on a pause too
+  const scheduleCommit = () => {
+    dirty.current = true;
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(commit, 2000);
   };
 
   const shared = {
@@ -47,7 +63,7 @@ export function AutoSave({
     placeholder,
     "aria-label": label,
     className: className ?? "field",
-    onChange: () => { dirty.current = true; },
+    onChange: scheduleCommit,
     onBlur: commit,
   };
 

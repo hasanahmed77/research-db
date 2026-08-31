@@ -53,7 +53,8 @@ export async function updatePaper(fd: FormData) {
   const supabase = await supabaseServer();
   const { error } = await supabase.from("papers").update({ [field]: value }).eq("id", id);
   if (error) throw new Error(error.message);
-  revalidatePath(`/papers/${id}`);
+  // only the pdf changes what gets rendered (signed URL + the open-pdf button)
+  if (field === "pdf_path") revalidatePath(`/papers/${id}`);
 }
 
 export async function saveNote(fd: FormData) {
@@ -66,7 +67,9 @@ export async function saveNote(fd: FormData) {
     .from("paper_notes")
     .upsert({ paper_id, prompt_id, body: (fd.get("body") as string) ?? "" }, { onConflict: "paper_id,prompt_id" });
   if (error) throw new Error(error.message);
-  revalidatePath(`/papers/${paper_id}`);
+  // deliberately no revalidatePath: re-rendering this page costs ~9 reads, and
+  // nothing on screen changes from saving the field you are typing in. The
+  // answered/unanswered split and the N/8 count settle on the next load.
 }
 
 export async function addTag(fd: FormData) {
