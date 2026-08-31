@@ -91,29 +91,6 @@ body {
   .quiet:focus { border-bottom-color: var(--accent); }
   .quiet:hover  { border-bottom-color: var(--accent-dim); }
 
-  /* elbow connectors, so nesting reads as a tree rather than as indentation */
-  .tree { @apply m-0 list-none p-0; }
-  .tree > li {
-    @apply relative pl-5;
-  }
-  .tree > li::before {          /* horizontal stub into the row */
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 1.05rem;
-    width: 0.85rem;
-    border-top: 1px solid var(--tree-line);
-  }
-  .tree > li::after {           /* vertical spine */
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    border-left: 1px solid var(--tree-line);
-  }
-  .tree > li:last-child::after { bottom: auto; height: 1.05rem; }
-
   /* navbar actions: icon only, no border */
   .nav-icon {
     @apply inline-flex h-9 w-9 items-center justify-center text-muted transition-colors;
