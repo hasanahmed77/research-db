@@ -42,13 +42,13 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
     : { data: [] };
   const titleById = new Map((neighbourPapers ?? []).map((p) => [p.id, p.title]));
 
+  // a link is mutual: which end recorded it is not shown, only who it connects to
   const neighbours = edgeRows.map((e) => {
-    const outgoing = e.source === id;
+    const otherId = e.source === id ? e.target : e.source;
     return {
-      otherId: outgoing ? e.target : e.source,
+      otherId,
       rel: e.rel,
-      dir: outgoing ? "→" : "←",
-      title: titleById.get(outgoing ? e.target : e.source) ?? "(unknown)",
+      title: titleById.get(otherId) ?? "(unknown)",
       from: e.source,
       to: e.target,
     };
@@ -130,7 +130,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
             {neighbours.map((n, i) => (
               <li key={i} className="flex items-center gap-2">
                 <span className={`chip ${n.rel === "cites" ? "" : "chip-cyan"}`}>
-                  {n.rel.replace(/_/g, " ")} {n.dir}
+                  {n.rel}
                 </span>
                 <Link href={`/papers/${n.otherId}`} className="hover:text-accent">{n.title}</Link>
                 <form action={removeEdge}>
