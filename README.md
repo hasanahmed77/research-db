@@ -62,11 +62,13 @@ so the list page is one query and no N+1.
 ## Apply
 
 ```bash
-supabase db push          # or: psql "$DATABASE_URL" -f each migration in order, then seed.sql
+supabase link --project-ref <ref>
+supabase db push
 ```
 
-Migrations run in filename order, `0001_schema` through `0006_cite_key_and_filters`, then
-`seed.sql`.
+Migrations run in filename order, `0001_schema` through `0007_note_prompts`. The eight reading
+questions are seeded by `0007`, not by `seed.sql` — `db push` never runs `seed.sql` against a
+remote project, so seeding them there would leave production with no prompts.
 
 ## Notes for the Next.js app
 
@@ -80,3 +82,30 @@ Migrations run in filename order, `0001_schema` through `0006_cite_key_and_filte
 - Semantic search later is additive: `create extension vector`, add
   `embedding vector(1536)` to `papers` with an HNSW index, and blend the distance into
   `search_papers`. Nothing above needs to change.
+
+## App
+
+Next.js 16 (App Router) + Tailwind 4. Reads go through server components, writes through server
+actions; there is no client data layer and no API routes beyond sign-out.
+
+```bash
+cp .env.local.example .env.local   # fill in project URL + publishable key
+npm install
+npm run dev
+```
+
+| route | what it does |
+|---|---|
+| `/` | library list; search box + status/year/stub filters, passed into the `search_papers` RPC |
+| `/papers/new` | add a paper, or a stub reference |
+| `/papers/[id]` | metadata, PDF upload, summary, the eight questions, tags, graph neighbourhood, excerpts |
+| `/login` | email + password |
+
+`proxy.ts` (Next 16's rename of `middleware.ts`) refreshes the Supabase session and redirects
+signed-out visitors to `/login`.
+
+Every editor on the paper page is its own one-field form that submits on blur — no page-wide save
+button, and no client state to keep in sync with the row.
+
+Adding an edge resolves the target by exact cite key first, then exact title. The datalist is
+capped at 500 papers; past that it should move to the search RPC.

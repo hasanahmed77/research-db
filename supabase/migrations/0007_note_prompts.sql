@@ -1,4 +1,7 @@
--- the built-in reading questions
+-- The built-in reading questions.
+-- These live in a migration rather than seed.sql because the app depends on
+-- them: `supabase db push` never runs seed.sql against a remote project, so a
+-- seeded-only version would leave production with no prompts at all.
 insert into note_prompts (owner_id, key, title, guidance, ord) values
 (null, 'motivation', 'What are the motivations for this work?', $g$Two parts. The people problem: what benefit in the world is wanted (time saved, safety, cost)? The technical problem: why is there no trivial solution? Then: what were the previous solutions and why are they inadequate? Finally, distil to the research question the paper actually sets out to answer — often narrower than the problem stated up front, and often not stated explicitly at all.$g$, 1),
 (null, 'solution', 'What is the proposed solution?', $g$The hypothesis or idea — the proposed answer to the research question. Why should it work, and why should it beat prior solutions? How is it designed and implemented, or at least shown to be achievable?$g$, 2),
