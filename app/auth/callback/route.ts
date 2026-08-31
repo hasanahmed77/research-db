@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase/server";
+import { siteOrigin } from "@/lib/site";
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  // not new URL(request.url).origin: behind a proxy that is the internal host
+  const origin = await siteOrigin();
   const code = searchParams.get("code");
   const oauthError = searchParams.get("error_description") ?? searchParams.get("error");
 

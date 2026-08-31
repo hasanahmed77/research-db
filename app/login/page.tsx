@@ -1,15 +1,12 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
+import { siteOrigin } from "@/lib/site";
 import { AboutCopy } from "@/components/AboutCopy";
 
 async function signInWithGoogle() {
   "use server";
   const supabase = await supabaseServer();
-  const h = await headers();
-  // works unchanged on localhost and on the deployed origin
-  const origin =
-    h.get("origin") ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
+  const origin = await siteOrigin();
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
