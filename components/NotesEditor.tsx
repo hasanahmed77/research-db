@@ -156,32 +156,17 @@ export function NotesEditor({
         </h2>
 
         {prompts.map((p) => {
-          const body = (values[p.id] ?? "").trim();
-          const editor = (
-            <>
-              {p.guidance && <p className="text-xs leading-relaxed text-muted">{p.guidance}</p>}
-              {box(p.id, 4)}
-            </>
-          );
+          const answered = Boolean((values[p.id] ?? "").trim());
           return (
             <div key={p.id} className="space-y-2">
               <h3 className="font-display text-sm font-semibold tracking-wide">
-                <span className={body ? "text-accent" : "text-muted"}>
+                <span className={answered ? "text-accent" : "text-muted"}>
                   {String(p.ord).padStart(2, "0")}
                 </span>{" "}
                 {p.title}
               </h3>
-              {body ? (
-                <>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">{values[p.id]}</p>
-                  <details>
-                    <summary className="disclosure text-xs">edit</summary>
-                    <div className="space-y-2 pt-2">{editor}</div>
-                  </details>
-                </>
-              ) : (
-                <div className="space-y-2">{editor}</div>
-              )}
+              {p.guidance && <p className="text-xs leading-relaxed text-muted">{p.guidance}</p>}
+              {box(p.id, 4)}
             </div>
           );
         })}
