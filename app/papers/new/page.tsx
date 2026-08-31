@@ -44,9 +44,9 @@ export default async function NewPaper() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="label">First tag <span className="normal-case opacity-60">(optional)</span></h2>
+        <h2 className="label">First tags <span className="normal-case opacity-60">(optional)</span></h2>
         <div className="flex flex-wrap items-center gap-2">
-          <input className="field w-48" name="name" placeholder="tag" />
+          <input className="field w-72" name="name" placeholder="tag, another tag — comma separated" />
           <select className="field w-32" name="kind">
             {TAG_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
           </select>

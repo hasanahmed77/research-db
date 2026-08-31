@@ -19,19 +19,41 @@ function str(fd: FormData, k: string) {
 
 type Db = Awaited<ReturnType<typeof supabaseServer>>;
 
-/** Tags are unique per (owner, kind, name); reuse the row rather than duplicating it. */
-async function applyTag(db: Db, paper_id: string, name: string, kind: string, role: string) {
-  const { data: found } = await db
-    .from("tags").select("id").eq("name", name).eq("kind", kind).maybeSingle();
+/** Split a comma-separated tag field into clean, de-duplicated names. */
+function tagNames(raw: string): string[] {
+  const seen = new Set<string>();
+  for (const part of raw.split(",")) {
+    const name = part.trim().replace(/\s+/g, " ");
+    if (name) seen.add(name);
+  }
+  return [...seen];
+}
 
-  let tag_id = found?.id;
-  if (!tag_id) {
-    const { data, error } = await db.from("tags").insert({ name, kind }).select("id").single();
+/**
+ * Tags are unique per (owner, kind, name), so existing rows are reused.
+ * Three round trips regardless of how many tags were typed: look up what
+ * exists, insert what does not, then attach them all in one upsert.
+ */
+async function applyTags(db: Db, paper_id: string, names: string[], kind: string, role: string) {
+  if (!names.length) return { ok: true };
+
+  const { data: existing, error: lookupError } = await db
+    .from("tags").select("id, name").eq("kind", kind).in("name", names);
+  if (lookupError) return { ok: false, message: lookupError.message };
+
+  const byName = new Map((existing ?? []).map((t) => [t.name, t.id as string]));
+  const missing = names.filter((n) => !byName.has(n));
+
+  if (missing.length) {
+    const { data: created, error } = await db
+      .from("tags").insert(missing.map((name) => ({ name, kind }))).select("id, name");
     if (error) return { ok: false, message: error.message };
-    tag_id = data.id;
+    (created ?? []).forEach((t) => byName.set(t.name, t.id as string));
   }
 
-  const { error } = await db.from("paper_tags").upsert({ paper_id, tag_id, role });
+  const { error } = await db.from("paper_tags").upsert(
+    names.map((n) => ({ paper_id, tag_id: byName.get(n)!, role })),
+  );
   return error ? { ok: false, message: error.message } : { ok: true };
 }
 
@@ -87,7 +109,7 @@ export async function createPaper(fd: FormData) {
   // an optional first tag and first connection, so filing needs no second trip
   const tagName = str(fd, "name");
   if (tagName) {
-    await applyTag(supabase, data.id, tagName, str(fd, "kind") ?? "topic", str(fd, "role") ?? "about");
+    await applyTags(supabase, data.id, tagNames(tagName), str(fd, "kind") ?? "topic", str(fd, "role") ?? "about");
   }
 
   const target = str(fd, "target");
@@ -154,7 +176,7 @@ export async function addTag(fd: FormData) {
   if (!paper_id || !name) return;
 
   const supabase = await supabaseServer();
-  await applyTag(supabase, paper_id, name, str(fd, "kind") ?? "topic", str(fd, "role") ?? "about");
+  await applyTags(supabase, paper_id, tagNames(name), str(fd, "kind") ?? "topic", str(fd, "role") ?? "about");
   revalidatePath(`/papers/${paper_id}`);
 }
 

@@ -106,7 +106,8 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
         )}
         <form action={addTag} className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="paper_id" value={id} />
-          <input className="field w-48" name="name" placeholder="tag" required />
+          <input className="field w-72" name="name" required
+                 placeholder="tag, another tag — comma separated" />
           <select className="field w-32" name="kind">
             {TAG_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
           </select>
