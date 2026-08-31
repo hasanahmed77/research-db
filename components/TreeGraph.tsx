@@ -193,17 +193,12 @@ export function TreeGraph({
               </>
             )}
 
+            {/* the colour carries the relation; the legend explains it */}
             {graph.flat.flatMap((n) =>
               n.children.map((c) => (
-                <g key={`e-${n.id}-${c.id}`}>
-                  <line x1={n.x} y1={n.y + R} x2={c.x} y2={c.y - R}
-                        stroke={REL_COLOR[c.rel ?? ""] ?? "var(--muted)"} strokeWidth={1.3} />
-                  <text x={(n.x + c.x) / 2} y={(n.y + c.y) / 2} textAnchor="middle" fontSize={9}
-                        fill={REL_COLOR[c.rel ?? ""] ?? "var(--muted)"}
-                        style={{ paintOrder: "stroke" }} stroke="var(--surface)" strokeWidth={3}>
-                    {c.rel} {c.dir}
-                  </text>
-                </g>
+                <line key={`e-${n.id}-${c.id}`}
+                      x1={n.x} y1={n.y + R} x2={c.x} y2={c.y - R}
+                      stroke={REL_COLOR[c.rel ?? ""] ?? "var(--muted)"} strokeWidth={1.3} />
               )))}
 
             {graph.cross.map((e, i) => {
