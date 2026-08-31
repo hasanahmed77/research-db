@@ -24,6 +24,19 @@ export default function About() {
         <p className="font-display text-sm font-semibold tracking-wide text-accent">
           A record of what you read. A map of what you know.
         </p>
+
+        <p className="pt-3 text-xs text-muted">
+          The eight questions come from{" "}
+          <a
+            href="https://cseweb.ucsd.edu/~wgg/CSE210/howtoread.html"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-2 transition-colors hover:text-accent"
+          >
+            How to Read an Engineering Research Paper
+          </a>
+          .
+        </p>
       </div>
     </div>
   );
