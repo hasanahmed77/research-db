@@ -105,7 +105,7 @@ export async function createPaper(fd: FormData) {
 
   const toIds = fd.getAll("to_ids").filter((v): v is string => typeof v === "string");
   if (toIds.length) {
-    await applyEdges(supabase, data.id, toIds, str(fd, "edge_kind") ?? "cites");
+    await applyEdges(supabase, data.id, toIds, str(fd, "edge_kind") ?? "related");
   }
 
   redirect(`/papers/${data.id}`);

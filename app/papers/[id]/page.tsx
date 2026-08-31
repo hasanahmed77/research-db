@@ -7,7 +7,7 @@ import { PdfUpload } from "@/components/PdfUpload";
 import {
   addEdge, addExcerpt, addTag, deleteExcerpt, removeEdge, removeTag, saveNotes, updatePaper,
 } from "@/app/actions";
-import { LINK_TYPES, STATUSES } from "@/lib/types";
+import { EDGE_KINDS, STATUSES } from "@/lib/types";
 
 export default async function PaperPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -138,8 +138,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
         <form action={addEdge} className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="paper_id" value={id} />
           <select className="field w-40" name="kind">
-            <option value="cites">cites</option>
-            {LINK_TYPES.map((k) => <option key={k} value={k}>{k.replace(/_/g, " ")}</option>)}
+            {EDGE_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
           </select>
           <select className="field flex-1 min-w-64" name="to_id" required defaultValue="">
             <option value="" disabled>pick a paper from your library</option>

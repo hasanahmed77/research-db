@@ -8,8 +8,12 @@ export type LinkType =
 export const STATUSES: PaperStatus[] = ["to_read", "reading", "read", "archived"];
 export const TAG_KINDS: TagKind[] = ["topic", "method", "dataset", "task", "metric", "application"];
 export const TAG_ROLES: TagRole[] = ["about", "introduces", "uses", "evaluates_on", "improves", "compares_against"];
-/** Selectable in the UI. The enum still holds the rest, so older rows stay valid. */
-export const LINK_TYPES: LinkType[] = ["related", "contradicts"];
+/**
+ * Relations offered in the UI, in menu order — the first is the default.
+ * "cites" writes a citation, the rest write a paper_link; the link_type enum
+ * still holds its other values so older rows stay valid.
+ */
+export const EDGE_KINDS = ["related", "cites", "contradicts"] as const;
 
 export type PaperCard = {
   id: string;

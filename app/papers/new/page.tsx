@@ -1,6 +1,6 @@
 import { createPaper } from "@/app/actions";
 import { supabaseServer } from "@/lib/supabase/server";
-import { LINK_TYPES } from "@/lib/types";
+import { EDGE_KINDS } from "@/lib/types";
 
 export default async function NewPaper() {
   const supabase = await supabaseServer();
@@ -51,8 +51,7 @@ export default async function NewPaper() {
       <section className="space-y-3">
         <h2 className="label">Links <span className="normal-case opacity-60">(optional)</span></h2>
         <select className="field w-40" name="edge_kind">
-          <option value="cites">cites</option>
-          {LINK_TYPES.map((k) => <option key={k} value={k}>{k}</option>)}
+          {EDGE_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
         </select>
 
         {(papers ?? []).length === 0 ? (
