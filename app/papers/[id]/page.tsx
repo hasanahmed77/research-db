@@ -60,10 +60,10 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
         </p>
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <AutoSave action={updatePaper} hidden={{ id, field: "status" }} name="value"
+          <AutoSave action={updatePaper} hidden={{ id, field: "status" }} name="value" label="status"
                     as="select" options={STATUSES} defaultValue={paper.status} className="quiet w-32" />
-          <AutoSave action={updatePaper} hidden={{ id, field: "cite_key" }} name="value"
-                    defaultValue={paper.cite_key ?? ""} placeholder="cite key" className="quiet w-44" />
+          <AutoSave action={updatePaper} hidden={{ id, field: "cite_key" }} name="value" label="cite key"
+                    defaultValue={paper.cite_key ?? ""} placeholder="—" className="quiet w-40" />
           {pdfUrl && <a className="btn" href={pdfUrl} target="_blank" rel="noreferrer">open pdf</a>}
           <PdfUpload paperId={id} action={updatePaper} />
           {paper.url && <a className="btn" href={paper.url} target="_blank" rel="noreferrer">link</a>}

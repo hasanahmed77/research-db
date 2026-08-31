@@ -10,7 +10,7 @@ type Action = (fd: FormData) => Promise<void>;
  * save button, no client state to keep in sync with the row.
  */
 export function AutoSave({
-  action, hidden, name, defaultValue, as = "input", rows = 3, placeholder, options, className,
+  action, hidden, name, defaultValue, as = "input", rows = 3, placeholder, options, className, label,
 }: {
   action: Action;
   hidden: Record<string, string>;
@@ -21,6 +21,8 @@ export function AutoSave({
   placeholder?: string;
   options?: string[];
   className?: string;
+  /** inline caption shown before the control; also names it for screen readers */
+  label?: string;
 }) {
   const form = useRef<HTMLFormElement>(null);
   const dirty = useRef(false);
@@ -43,13 +45,16 @@ export function AutoSave({
     name,
     defaultValue,
     placeholder,
+    "aria-label": label,
     className: className ?? "field",
     onChange: () => { dirty.current = true; },
     onBlur: commit,
   };
 
   return (
-    <form ref={form} action={action} className="relative">
+    <form ref={form} action={action}
+          className={label ? "relative flex items-center gap-1.5" : "relative"}>
+      {label && <span className="text-sm text-muted">{label}</span>}
       {Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
       {as === "textarea" && <textarea {...shared} rows={rows} />}
       {as === "input" && <input {...shared} />}
