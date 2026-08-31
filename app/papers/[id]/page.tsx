@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { AutoSave } from "@/components/AutoSave";
 import { NotesEditor } from "@/components/NotesEditor";
+import { PaperPicker } from "@/components/PaperPicker";
 import { PdfUpload } from "@/components/PdfUpload";
 import {
-  addEdge, addExcerpt, addTag, deleteExcerpt, removeEdge, removeTag, saveNotes, updatePaper,
+  addEdge, addExcerpt, addTag, deleteExcerpt, findPapers, removeEdge, removeTag, saveNotes,
+  updatePaper,
 } from "@/app/actions";
 import { EDGE_KINDS, STATUSES } from "@/lib/types";
 
@@ -18,21 +20,29 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
   if (!paper) notFound();
 
   const [{ data: prompts }, { data: notes }, { data: paperTags }, { data: excerpts },
-         { data: edges }, { data: authors }, { data: allPapers }] = await Promise.all([
+         { data: edges }, { data: authors }] = await Promise.all([
     supabase.from("note_prompts").select("id, key, title, guidance, ord").eq("is_active", true).order("ord"),
     supabase.from("paper_notes").select("prompt_id, body").eq("paper_id", id),
     supabase.from("paper_tags").select("role, tags(id, name, kind)").eq("paper_id", id),
     supabase.from("excerpts").select("id, page, quote, comment").eq("paper_id", id).order("page", { nullsFirst: false }),
     supabase.rpc("paper_graph", { root: id, depth: 1 }),
     supabase.from("paper_authors").select("ord, authors(name)").eq("paper_id", id).order("ord"),
-    supabase.from("papers").select("id, title").order("title").limit(500),
   ]);
 
   const noteBy = new Map((notes ?? []).map((n) => [n.prompt_id, n.body]));
-  const titleById = new Map((allPapers ?? []).map((p) => [p.id, p.title]));
 
   type Edge = { source: string; target: string; rel: string };
-  const neighbours = ((edges ?? []) as Edge[]).map((e) => {
+  const edgeRows = (edges ?? []) as Edge[];
+
+  // look up only the papers actually on screen, rather than the whole library
+  const neighbourIds = [...new Set(edgeRows.flatMap((e) => [e.source, e.target]))]
+    .filter((x) => x !== id);
+  const { data: neighbourPapers } = neighbourIds.length
+    ? await supabase.from("papers").select("id, title").in("id", neighbourIds)
+    : { data: [] };
+  const titleById = new Map((neighbourPapers ?? []).map((p) => [p.id, p.title]));
+
+  const neighbours = edgeRows.map((e) => {
     const outgoing = e.source === id;
     return {
       otherId: outgoing ? e.target : e.source,
@@ -135,17 +145,12 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
         ) : (
           <p className="text-sm text-muted">No edges yet.</p>
         )}
-        <form action={addEdge} className="flex flex-wrap items-center gap-2">
+        <form action={addEdge} className="space-y-2">
           <input type="hidden" name="paper_id" value={id} />
           <select className="field w-40" name="kind">
             {EDGE_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
           </select>
-          <select className="field flex-1 min-w-64" name="to_id" required defaultValue="">
-            <option value="" disabled>pick a paper from your library</option>
-            {(allPapers ?? []).filter((p) => p.id !== id).map((p) => (
-              <option key={p.id} value={p.id}>{p.title}</option>
-            ))}
-          </select>
+          <PaperPicker name="to_ids" excludeId={id} search={findPapers} />
           <button className="btn">link</button>
         </form>
 

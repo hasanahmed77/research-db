@@ -183,13 +183,32 @@ export async function removeTag(fd: FormData) {
 
 export async function addEdge(fd: FormData) {
   const from_id = str(fd, "paper_id");
-  const to_id = str(fd, "to_id");
   const kind = str(fd, "kind");
-  if (!from_id || !to_id || !kind) return;
+  const to_ids = fd.getAll("to_ids").filter((v): v is string => typeof v === "string");
+  if (!from_id || !kind || !to_ids.length) return;
 
   const supabase = await supabaseServer();
-  await applyEdges(supabase, from_id, [to_id], kind);
+  await applyEdges(supabase, from_id, to_ids, kind);
   revalidatePath(`/papers/${from_id}`);
+}
+
+/**
+ * Backs the paper picker. Searching in the database rather than shipping the
+ * whole library to the browser is what keeps this usable at a few thousand
+ * papers; the trigram index on papers.title serves the ilike.
+ */
+export async function findPapers(q: string, excludeId?: string) {
+  const supabase = await supabaseServer();
+  const term = q.trim();
+
+  let query = supabase.from("papers").select("id, title, year, is_stub").limit(20);
+  query = term
+    ? query.ilike("title", `%${term}%`).order("title")
+    : query.order("created_at", { ascending: false });
+  if (excludeId) query = query.neq("id", excludeId);
+
+  const { data } = await query;
+  return data ?? [];
 }
 
 export async function removeEdge(fd: FormData) {

@@ -1,11 +1,8 @@
-import { createPaper } from "@/app/actions";
-import { supabaseServer } from "@/lib/supabase/server";
+import { createPaper, findPapers } from "@/app/actions";
+import { PaperPicker } from "@/components/PaperPicker";
 import { EDGE_KINDS } from "@/lib/types";
 
-export default async function NewPaper() {
-  const supabase = await supabaseServer();
-  const { data: papers } = await supabase.from("papers").select("id, title").order("title").limit(500);
-
+export default function NewPaper() {
   return (
     <form action={createPaper} className="max-w-3xl space-y-8">
       <h1 className="font-display text-xl font-semibold tracking-wide">Add a paper</h1>
@@ -53,22 +50,7 @@ export default async function NewPaper() {
         <select className="field w-40" name="edge_kind">
           {EDGE_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
         </select>
-
-        {(papers ?? []).length === 0 ? (
-          <p className="text-sm text-muted">
-            Nothing to link to yet — this is your first paper.
-          </p>
-        ) : (
-          <div className="max-h-56 space-y-1 overflow-y-auto border border-line bg-surface p-2">
-            {(papers ?? []).map((p) => (
-              <label key={p.id}
-                     className="flex cursor-pointer items-center gap-2 px-1 py-0.5 text-sm hover:text-accent">
-                <input type="checkbox" name="to_ids" value={p.id} />
-                {p.title}
-              </label>
-            ))}
-          </div>
-        )}
+        <PaperPicker name="to_ids" search={findPapers} />
       </section>
 
       <button className="btn">Add</button>
