@@ -89,8 +89,10 @@ body {
 
   /* secondary controls: underline only, so they sit below the search box */
   .quiet {
-    @apply appearance-none border-0 border-b bg-transparent px-1 py-0.5 text-xs outline-none
-           transition-colors;
+    /* same height and type size as .field / .btn, just without the box */
+    @apply inline-flex appearance-none items-center border-0 border-b bg-transparent px-1.5 py-1.5
+           text-sm leading-5 outline-none transition-colors;
+    min-height: 2.125rem;
     border-bottom-color: var(--line);
     color: var(--fg);
   }

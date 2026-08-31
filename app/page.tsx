@@ -57,7 +57,7 @@ export default async function Library({ searchParams }: { searchParams: Promise<
           <button className="btn">search</button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted">
           <label className="flex items-center gap-1.5">
             status
             <select className="quiet" name="status" defaultValue={sp.status ?? ""}>
@@ -69,9 +69,9 @@ export default async function Library({ searchParams }: { searchParams: Promise<
 
           <label className="flex items-center gap-1.5">
             years
-            <input className="quiet w-12" name="from" defaultValue={sp.from ?? ""} placeholder="…" />
+            <input className="quiet w-14" name="from" defaultValue={sp.from ?? ""} placeholder="…" />
             <span aria-hidden>–</span>
-            <input className="quiet w-12" name="to" defaultValue={sp.to ?? ""} placeholder="…" />
+            <input className="quiet w-14" name="to" defaultValue={sp.to ?? ""} placeholder="…" />
           </label>
 
           <label className="flex cursor-pointer items-center gap-1.5">
