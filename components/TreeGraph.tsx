@@ -106,7 +106,7 @@ export function TreeGraph({
         </div>
 
         {expanded && children.length > 0 && (
-          <ul className="ml-2 border-l border-line pl-4">
+          <ul className="tree ml-2">
             {children.map((c, i) => (
               <Branch key={`${c.id}-${c.rel}-${i}`}
                       id={c.id}
@@ -139,7 +139,7 @@ export function TreeGraph({
       </div>
 
       {root ? (
-        <ul>
+        <ul className="list-none p-0">
           <Branch id={root} ancestors={[]} path="r" />
         </ul>
       ) : (
