@@ -100,7 +100,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {/* thin accent rule under the bar */}
           <div className="h-px bg-gradient-to-r from-accent/60 via-cyan/25 to-transparent" />
         </header>
-        <main className="flex flex-1 flex-col px-4 py-8">{children}</main>
+        <main className="flex flex-1 flex-col overflow-x-clip px-4 py-8">{children}</main>
 
         <footer className="glass border-x-0 border-b-0">
           <div className="mx-auto flex max-w-5xl flex-wrap items-end gap-x-10 gap-y-6 px-4 py-8
