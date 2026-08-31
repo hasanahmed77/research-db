@@ -17,6 +17,51 @@ function str(fd: FormData, k: string) {
   return typeof v === "string" && v.trim() !== "" ? v.trim() : null;
 }
 
+type Db = Awaited<ReturnType<typeof supabaseServer>>;
+
+/** Tags are unique per (owner, kind, name); reuse the row rather than duplicating it. */
+async function applyTag(db: Db, paper_id: string, name: string, kind: string, role: string) {
+  const { data: found } = await db
+    .from("tags").select("id").eq("name", name).eq("kind", kind).maybeSingle();
+
+  let tag_id = found?.id;
+  if (!tag_id) {
+    const { data, error } = await db.from("tags").insert({ name, kind }).select("id").single();
+    if (error) return { ok: false, message: error.message };
+    tag_id = data.id;
+  }
+
+  const { error } = await db.from("paper_tags").upsert({ paper_id, tag_id, role });
+  return error ? { ok: false, message: error.message } : { ok: true };
+}
+
+/** Resolve the other paper by cite key, then exact title; optionally mint a stub. */
+async function applyEdge(
+  db: Db, from_id: string, target: string, kind: string,
+  note: string | null, createStub: boolean,
+) {
+  const { data: byKey } = await db
+    .from("papers").select("id").ilike("cite_key", target).maybeSingle();
+  const byTitle = byKey ? null : (await db
+    .from("papers").select("id").eq("title", target).limit(1).maybeSingle()).data;
+
+  let to_id: string | null = byKey?.id ?? byTitle?.id ?? null;
+
+  if (!to_id && createStub) {
+    const { data, error } = await db
+      .from("papers").insert({ title: target, is_stub: true }).select("id").single();
+    if (error) return { ok: false, message: error.message };
+    to_id = data.id;
+  }
+  if (!to_id || to_id === from_id) return { ok: true };
+
+  const { error } =
+    kind === "cites"
+      ? await db.from("citations").upsert({ citing_id: from_id, cited_id: to_id, note })
+      : await db.from("paper_links").upsert({ from_id, to_id, kind, note });
+  return error ? { ok: false, message: error.message } : { ok: true };
+}
+
 export async function createPaper(fd: FormData) {
   const supabase = await supabaseServer();
   const title = str(fd, "title");
@@ -38,6 +83,19 @@ export async function createPaper(fd: FormData) {
     .single();
 
   if (error) throw new Error(error.message);
+
+  // an optional first tag and first connection, so filing needs no second trip
+  const tagName = str(fd, "name");
+  if (tagName) {
+    await applyTag(supabase, data.id, tagName, str(fd, "kind") ?? "topic", str(fd, "role") ?? "about");
+  }
+
+  const target = str(fd, "target");
+  if (target) {
+    await applyEdge(supabase, data.id, target, str(fd, "edge_kind") ?? "cites",
+                    str(fd, "note"), fd.get("stub") === "on");
+  }
+
   redirect(`/papers/${data.id}`);
 }
 
@@ -93,24 +151,10 @@ export async function saveNotes(
 export async function addTag(fd: FormData) {
   const paper_id = str(fd, "paper_id");
   const name = str(fd, "name");
-  const kind = str(fd, "kind") ?? "topic";
-  const role = str(fd, "role") ?? "about";
   if (!paper_id || !name) return;
 
   const supabase = await supabaseServer();
-  // tags are unique per (owner, kind, name); reuse the row if it already exists
-  const { data: found } = await supabase
-    .from("tags").select("id").eq("name", name).eq("kind", kind).maybeSingle();
-
-  let tag_id = found?.id;
-  if (!tag_id) {
-    const { data, error } = await supabase.from("tags").insert({ name, kind }).select("id").single();
-    if (error) throw new Error(error.message);
-    tag_id = data.id;
-  }
-
-  const { error } = await supabase.from("paper_tags").upsert({ paper_id, tag_id, role });
-  if (error) throw new Error(error.message);
+  await applyTag(supabase, paper_id, name, str(fd, "kind") ?? "topic", str(fd, "role") ?? "about");
   revalidatePath(`/papers/${paper_id}`);
 }
 
@@ -125,17 +169,6 @@ export async function removeTag(fd: FormData) {
   revalidatePath(`/papers/${paper_id}`);
 }
 
-/** Resolve the "other paper" in a link/citation form: exact cite key, else exact title. */
-async function resolveTarget(target: string) {
-  const supabase = await supabaseServer();
-  const { data: byKey } = await supabase
-    .from("papers").select("id").ilike("cite_key", target).maybeSingle();
-  if (byKey) return byKey.id as string;
-  const { data: byTitle } = await supabase
-    .from("papers").select("id").eq("title", target).limit(1).maybeSingle();
-  return (byTitle?.id as string) ?? null;
-}
-
 export async function addEdge(fd: FormData) {
   const from_id = str(fd, "paper_id");
   const target = str(fd, "target");
@@ -143,26 +176,7 @@ export async function addEdge(fd: FormData) {
   if (!from_id || !target || !kind) return;
 
   const supabase = await supabaseServer();
-  let to_id = await resolveTarget(target);
-
-  // Most references you cite are not in the library yet. Rather than leaving the
-  // paper to create a stub and coming back, tick "new stub" and the typed text
-  // becomes the title of one. Opt-in, so a typo cannot silently mint a paper.
-  if (!to_id && fd.get("stub") === "on") {
-    const { data, error } = await supabase
-      .from("papers").insert({ title: target, is_stub: true }).select("id").single();
-    if (error) throw new Error(error.message);
-    to_id = data.id;
-  }
-
-  if (!to_id || to_id === from_id) return;
-
-  const note = str(fd, "note");
-  const { error } =
-    kind === "cites"
-      ? await supabase.from("citations").upsert({ citing_id: from_id, cited_id: to_id, note })
-      : await supabase.from("paper_links").upsert({ from_id, to_id, kind, note });
-  if (error) throw new Error(error.message);
+  await applyEdge(supabase, from_id, target, kind, str(fd, "note"), fd.get("stub") === "on");
   revalidatePath(`/papers/${from_id}`);
 }
 

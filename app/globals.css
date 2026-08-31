@@ -77,20 +77,6 @@ body {
   }
   .btn:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* the one filled button: a page's single primary action, used sparingly */
-  .btn-cta {
-    background: var(--accent);
-    /* lighter rim so the border stays visible against the fill */
-    border-color: color-mix(in srgb, var(--accent) 55%, #fff);
-    color: #0a0a0c;
-    font-weight: 600;
-  }
-  .btn-cta:hover {
-    background: color-mix(in srgb, var(--accent) 82%, #fff);
-    border-color: #fff;
-    color: #0a0a0c;
-  }
-
   /* secondary controls: underline only, so they sit below the search box */
   .quiet {
     /* same height and type size as .field / .btn, just without the box */
