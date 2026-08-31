@@ -43,6 +43,26 @@ body {
 ::selection { background: var(--accent); color: #000000; }
 
 @layer components {
+  /* Entrance for the signed-out home. 14px of travel over half a second is
+     enough to read as movement without making anyone wait for it. */
+  @keyframes slide-from-left {
+    from { opacity: 0; transform: translateX(-14px); }
+    to   { opacity: 1; transform: none; }
+  }
+  @keyframes slide-from-right {
+    from { opacity: 0; transform: translateX(14px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .slide-from-left {
+    animation: slide-from-left 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+  .slide-from-right {
+    animation: slide-from-right 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) 0.08s both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .slide-from-left, .slide-from-right { animation: none; }
+  }
+
   /* Loading placeholders: barely there. A breathing opacity rather than a
      sweeping shimmer, so a fast route never flashes something distracting. */
   .skeleton {

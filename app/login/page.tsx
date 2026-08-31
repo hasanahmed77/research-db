@@ -41,12 +41,13 @@ export default async function Login({
   return (
     <div className="flex flex-1 items-center justify-center px-4">
       <div className="grid w-full max-w-6xl items-center gap-12 md:grid-cols-5 md:gap-16">
-        <div className="md:col-span-3">
+        <div className="slide-from-left md:col-span-3">
           <AboutCopy variant="hero" />
         </div>
 
         {/* the border and padding belong to the column; the block centres inside it */}
-        <div className="flex justify-center md:col-span-2 md:border-l md:border-line md:px-12">
+        <div className="slide-from-right flex justify-center md:col-span-2 md:border-l
+                        md:border-line md:px-12">
           <div className="w-full max-w-sm space-y-5 text-center">
             <h1 className="font-display text-xl font-semibold tracking-wide">Sign in</h1>
             {error && (
