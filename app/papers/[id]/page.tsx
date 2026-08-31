@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
+import { must } from "@/lib/db";
 import { AutoSave } from "@/components/AutoSave";
 import { NotesEditor } from "@/components/NotesEditor";
 import { PaperPicker } from "@/components/PaperPicker";
@@ -17,18 +18,18 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
   const { id } = await params;
   const supabase = await supabaseServer();
 
-  const { data: paper } = await supabase
-    .from("papers").select("*, venues(name, short_name)").eq("id", id).maybeSingle();
+  const paper = must(
+    await supabase.from("papers").select("*, venues(name, short_name)").eq("id", id).maybeSingle(),
+  );
   if (!paper) notFound();
 
-  const [{ data: prompts }, { data: notes }, { data: paperTags }, { data: excerpts },
-         { data: edges }, { data: authors }] = await Promise.all([
-    supabase.from("note_prompts").select("id, key, title, guidance, ord").eq("is_active", true).order("ord"),
-    supabase.from("paper_notes").select("prompt_id, body").eq("paper_id", id),
-    supabase.from("paper_tags").select("role, tags(id, name, kind)").eq("paper_id", id),
-    supabase.from("excerpts").select("id, page, quote, comment").eq("paper_id", id).order("page", { nullsFirst: false }),
-    supabase.rpc("paper_graph", { root: id, depth: 1 }),
-    supabase.from("paper_authors").select("ord, authors(name)").eq("paper_id", id).order("ord"),
+  const [prompts, notes, paperTags, excerpts, edges, authors] = await Promise.all([
+    supabase.from("note_prompts").select("id, key, title, guidance, ord").eq("is_active", true).order("ord").then(must),
+    supabase.from("paper_notes").select("prompt_id, body").eq("paper_id", id).then(must),
+    supabase.from("paper_tags").select("role, tags(id, name, kind)").eq("paper_id", id).then(must),
+    supabase.from("excerpts").select("id, page, quote, comment").eq("paper_id", id).order("page", { nullsFirst: false }).then(must),
+    supabase.rpc("paper_graph", { root: id, depth: 1 }).then(must),
+    supabase.from("paper_authors").select("ord, authors(name)").eq("paper_id", id).order("ord").then(must),
   ]);
 
   const noteBy = new Map((notes ?? []).map((n) => [n.prompt_id, n.body]));
@@ -39,9 +40,9 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
   // look up only the papers actually on screen, rather than the whole library
   const neighbourIds = [...new Set(edgeRows.flatMap((e) => [e.source, e.target]))]
     .filter((x) => x !== id);
-  const { data: neighbourPapers } = neighbourIds.length
-    ? await supabase.from("papers").select("id, title").in("id", neighbourIds)
-    : { data: [] };
+  const neighbourPapers = neighbourIds.length
+    ? must(await supabase.from("papers").select("id, title").in("id", neighbourIds))
+    : [];
   const titleById = new Map((neighbourPapers ?? []).map((p) => [p.id, p.title]));
 
   // a link is mutual: which end recorded it is not shown, only who it connects to
@@ -56,6 +57,8 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
     };
   });
 
+  // deliberately not must(): a storage hiccup should hide the pdf button, not
+  // block the notes, which are the reason the page exists
   const pdfUrl = paper.pdf_path
     ? (await supabase.storage.from("papers").createSignedUrl(paper.pdf_path, 3600)).data?.signedUrl
     : null;

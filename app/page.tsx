@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabaseServer } from "@/lib/supabase/server";
+import { must } from "@/lib/db";
 import { DeletePaper } from "@/components/DeletePaper";
 import { deletePaper } from "@/app/actions";
 import { STATUSES, type PaperCard } from "@/lib/types";
@@ -37,7 +38,7 @@ export default async function Library({ searchParams }: { searchParams: Promise<
     snippets = new Map((hits ?? []).map((h: { id: string; snippet: string }) => [h.id, h.snippet]));
 
     if (ids.length) {
-      const { data } = await supabase.from("paper_cards").select("*").in("id", ids);
+      const data = must(await supabase.from("paper_cards").select("*").in("id", ids));
       const order = new Map<string, number>(ids.map((id, i) => [id, i]));
       cards = (data ?? []).sort((a, b) => order.get(a.id)! - order.get(b.id)!);
     }

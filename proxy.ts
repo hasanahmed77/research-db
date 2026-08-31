@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { hasSessionCookie, isTransientAuthError } from "@/lib/auth";
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -28,12 +29,15 @@ export async function proxy(request: NextRequest) {
 
   // A failure to reach the auth server is not the same as being signed out.
   // Without this, a blip logs you out visually and drops you on the marketing
-  // page mid-session. If the session cookie is still present, let the request
-  // through and let the page's own error boundary explain itself.
-  const hasSession = request.cookies
-    .getAll()
-    .some((c) => c.name.startsWith("sb-") && c.name.includes("auth-token"));
-  if (!data.user && error && hasSession) return response;
+  // page mid-session. Being signed out is itself reported as an error, so only
+  // a genuinely transient one counts.
+  if (
+    !data.user &&
+    isTransientAuthError(error) &&
+    hasSessionCookie(request.cookies.getAll().map((c) => c.name))
+  ) {
+    return response;
+  }
 
   if (!data.user && !isPublic) {
     const url = request.nextUrl.clone();

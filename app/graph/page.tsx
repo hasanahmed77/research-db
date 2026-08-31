@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabaseServer } from "@/lib/supabase/server";
+import { must } from "@/lib/db";
 import { TreeGraph, type TreeEdge, type TreeNodeData } from "@/components/TreeGraph";
 
 export default async function GraphPage() {
@@ -8,10 +9,10 @@ export default async function GraphPage() {
   // the adjacency has to be complete for expansion to be instant; both sets are
   // small enough at personal-library scale that fetching them beats a round
   // trip per expand
-  const [{ data: papers }, { data: edges }] = await Promise.all([
+  const [papers, edges] = await Promise.all([
     supabase.from("papers").select("id, title, status, is_stub")
-      .order("created_at", { ascending: false }).limit(1000),
-    supabase.from("paper_edges").select("source, target, rel").limit(4000),
+      .order("created_at", { ascending: false }).limit(1000).then(must),
+    supabase.from("paper_edges").select("source, target, rel").limit(4000).then(must),
   ]);
 
   const nodes = (papers ?? []) as TreeNodeData[];

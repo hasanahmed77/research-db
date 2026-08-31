@@ -2,7 +2,9 @@ import "./globals.css";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Chakra_Petch, Spectral } from "next/font/google";
+import { cookies } from "next/headers";
 import { supabaseServer } from "@/lib/supabase/server";
+import { hasSessionCookie, isTransientAuthError } from "@/lib/auth";
 import { Fracture } from "@/components/Fracture";
 
 const chakra = Chakra_Petch({
@@ -30,7 +32,15 @@ const icon = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const supabase = await supabaseServer();
-  const { data } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getUser();
+
+  // Same reasoning as proxy.ts: a network or server fault is not a signed-out
+  // user, and rendering the signed-out nav mid-session is how "it says I am
+  // logged out" happens. A missing session is not such a fault.
+  const store = await cookies();
+  const signedIn =
+    Boolean(data.user) ||
+    (isTransientAuthError(error) && hasSessionCookie(store.getAll().map((c) => c.name)));
 
   return (
     <html lang="en" className={`${chakra.variable} ${spectral.variable}`}>
@@ -49,7 +59,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <path d="M12 7.6v.9" />
                 </svg>
               </Link>
-              {data.user && (
+              {signedIn && (
                 <>
                 <Link href="/graph" className="nav-icon" aria-label="Graph" title="Graph">
                   <svg width="19" height="19" viewBox="0 0 24 24" {...icon}>
@@ -96,7 +106,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
             <nav className="flex flex-wrap gap-x-5 gap-y-2">
               <Link href="/about" className="transition-colors hover:text-accent">about</Link>
-              {data.user && (
+              {signedIn && (
                 <>
                   <Link href="/" className="transition-colors hover:text-accent">library</Link>
                   <Link href="/graph" className="transition-colors hover:text-accent">graph</Link>
