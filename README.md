@@ -99,12 +99,15 @@ npm run dev
 | `/` | library list; search box + status/year/stub filters, passed into the `search_papers` RPC |
 | `/papers/new` | add a paper, or a stub reference |
 | `/papers/[id]` | metadata, PDF upload, summary, the eight questions, tags, graph neighbourhood, excerpts |
-| `/login` | Google OAuth, plus email + password |
+| `/login` | Google OAuth (the only sign-in method) |
 | `/auth/callback` | exchanges the OAuth code for a session |
 
 `proxy.ts` (Next 16's rename of `middleware.ts`) refreshes the Supabase session and redirects
 signed-out visitors to `/login`. `/auth/*` is exempt — the OAuth callback runs before a session
 exists, so gating it would bounce the code away before it could be exchanged.
+
+Google is the only sign-in method. Disabling the email provider in Supabase → Authentication →
+Sign In / Providers closes off password sign-up at the API too, not just in the UI.
 
 Google sign-in needs provider config that does not live in this repo:
 
