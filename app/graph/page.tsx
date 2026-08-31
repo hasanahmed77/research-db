@@ -18,7 +18,7 @@ export default async function GraphPage() {
   const links = (edges ?? []) as TreeEdge[];
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-1 flex-col gap-4">
       <h1 className="label">Graph · {nodes.length} papers · {links.length} links</h1>
       {nodes.length === 0 ? (
         <p className="text-sm text-muted">

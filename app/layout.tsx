@@ -85,22 +85,26 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <main className="flex flex-1 flex-col px-4 py-8">{children}</main>
 
         <footer className="glass border-x-0 border-b-0">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-4
+          <div className="mx-auto flex max-w-5xl flex-wrap items-end gap-x-10 gap-y-6 px-4 py-8
                           text-xs text-muted">
-            <span className="logo text-sm text-fg">
-              Research<span className="text-accent">/</span>db
-            </span>
-            <span>a library you fill one paper at a time</span>
-            <nav className="flex gap-4">
+            <div className="space-y-1.5">
+              <p className="logo text-base text-fg">
+                Research<span className="text-accent">/</span>db
+              </p>
+              <p>a library you fill one paper at a time</p>
+            </div>
+
+            <nav className="flex flex-wrap gap-x-5 gap-y-2">
               <Link href="/about" className="transition-colors hover:text-accent">about</Link>
+              {data.user && (
+                <>
+                  <Link href="/" className="transition-colors hover:text-accent">library</Link>
+                  <Link href="/graph" className="transition-colors hover:text-accent">graph</Link>
+                  <Link href="/papers/new" className="transition-colors hover:text-accent">add paper</Link>
+                </>
+              )}
             </nav>
-            {data.user && (
-              <nav className="flex gap-4">
-                <Link href="/" className="transition-colors hover:text-accent">library</Link>
-                <Link href="/graph" className="transition-colors hover:text-accent">graph</Link>
-                <Link href="/papers/new" className="transition-colors hover:text-accent">add paper</Link>
-              </nav>
-            )}
+
             <a href="https://github.com/hasanahmed77/research-db" target="_blank" rel="noreferrer"
                className="ml-auto transition-colors hover:text-accent">
               source

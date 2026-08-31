@@ -245,7 +245,7 @@ export function TreeGraph({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-1 flex-col gap-4">
       <div className="space-y-2">
         <input className="field" value={query} placeholder="find a paper…"
                aria-label="find a paper in the graph"
@@ -264,7 +264,7 @@ export function TreeGraph({
       </div>
 
       {graph ? (
-        <div className="glass relative h-[calc(100vh-19rem)] min-h-96 overflow-hidden">
+        <div className="glass relative min-h-96 flex-1 overflow-hidden">
           <div className="absolute right-2 top-2 z-10 flex gap-1">
             <button type="button" className="btn-sm" onClick={() => zoomBy(1.2)} aria-label="zoom in">+</button>
             <button type="button" className="btn-sm" onClick={() => zoomBy(1 / 1.2)} aria-label="zoom out">−</button>
