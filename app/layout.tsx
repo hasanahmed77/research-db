@@ -1,7 +1,7 @@
 import "./globals.css";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Chakra_Petch, Rajdhani } from "next/font/google";
+import { Chakra_Petch, Spectral } from "next/font/google";
 import { supabaseServer } from "@/lib/supabase/server";
 import { Fracture } from "@/components/Fracture";
 
@@ -11,10 +11,10 @@ const chakra = Chakra_Petch({
   variable: "--font-chakra",
 });
 
-// Rajdhani is the typeface Cyberpunk 2077 uses for its interface
-const rajdhani = Rajdhani({
+// A light serif: formal against the technical chrome of everything else
+const spectral = Spectral({
   subsets: ["latin"],
-  weight: ["600", "700"],
+  weight: ["300", "400"],
   variable: "--font-logo",
 });
 
@@ -33,7 +33,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { data } = await supabase.auth.getUser();
 
   return (
-    <html lang="en" className={`${chakra.variable} ${rajdhani.variable}`}>
+    <html lang="en" className={`${chakra.variable} ${spectral.variable}`}>
       <body className="min-h-screen antialiased">
         <Fracture />
         <header className="glass sticky top-0 z-20 border-x-0 border-t-0">

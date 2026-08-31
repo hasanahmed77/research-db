@@ -11,7 +11,7 @@
   --color-cyan: var(--cyan);
   --color-danger: var(--danger);
   --font-display: var(--font-chakra), ui-sans-serif, system-ui, sans-serif;
-  --font-brand: var(--font-logo), var(--font-chakra), ui-sans-serif, sans-serif;
+  --font-brand: var(--font-logo), ui-serif, Georgia, serif;
 }
 
 /* Committed to the dark look — the palette only reads as itself on black. */
@@ -112,7 +112,8 @@ body {
 
   .logo {
     font-family: var(--font-brand);
-    @apply font-bold leading-none tracking-[0.04em];
+    @apply leading-none tracking-[0.01em];
+    font-weight: 300;
   }
 
   /* navbar actions: icon only, no border */
