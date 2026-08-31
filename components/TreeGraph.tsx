@@ -23,6 +23,7 @@ const COL = 190;   // horizontal room per leaf — titles need it
 const ROW = 104;   // vertical gap per level
 const R = 15;
 const PAD = 40;
+const LABEL_W = 160;  // side labels need horizontal room of their own
 
 type Link_ = { id: string; rel: string; dir: "→" | "←" };
 type VNode = {
@@ -129,10 +130,20 @@ export function TreeGraph({
     };
     place(rootNode, 0);
 
+    // shift everything so the root sits on the vertical centre line, and make
+    // the canvas symmetric about it so "centred" holds however lopsided the
+    // branches are. Labels sit outside the nodes, so they need room too.
     const flat = [...placed.values()];
-    const width = Math.max(column * COL + PAD * 2, 560);
-    const height = Math.max(...flat.map((n) => n.y)) + PAD + 34;
-    return { flat, cross, byNode: placed, width, height };
+    const rootX = rootNode.x;
+    const half =
+      Math.max(rootX - Math.min(...flat.map((n) => n.x)),
+               Math.max(...flat.map((n) => n.x)) - rootX) + LABEL_W;
+    const width = Math.max(2 * half + PAD * 2, 560);
+    const dx = width / 2 - rootX;
+    flat.forEach((n) => { n.x += dx; });
+
+    const height = Math.max(...flat.map((n) => n.y)) + PAD + 20;
+    return { flat, cross, byNode: placed, width, height, centreX: width / 2 };
   }, [root, adj, byId, collapsed]);
 
   const clip = (t: string, n = 22) => (t.length > n ? t.slice(0, n) + "…" : t);
@@ -209,13 +220,24 @@ export function TreeGraph({
                       {n.hidden}
                     </text>
                   )}
-                  <text
-                    x={n.x} y={n.y + R + 14} textAnchor="middle" fontSize={11}
-                    fill="var(--fg)" style={{ cursor: "pointer" }}
-                    onClick={() => router.push(`/papers/${n.id}`)}
-                  >
-                    {clip(p.title)}
-                  </text>
+                  {(() => {
+                    const side = n.x - graph.centreX;
+                    const isRoot = n.depth === 0;
+                    // root above, left branch to the left, right branch to the
+                    // right — labels lean away from the drawing, never over it
+                    const anchor = isRoot || Math.abs(side) < 1
+                      ? "middle" : side < 0 ? "end" : "start";
+                    const tx = anchor === "middle" ? n.x : side < 0 ? n.x - R - 7 : n.x + R + 7;
+                    const ty = isRoot ? n.y - R - 9
+                      : anchor === "middle" ? n.y + R + 15 : n.y + 4;
+                    return (
+                      <text x={tx} y={ty} textAnchor={anchor} fontSize={11}
+                            fill="var(--fg)" style={{ cursor: "pointer" }}
+                            onClick={() => router.push(`/papers/${n.id}`)}>
+                        {clip(p.title)}
+                      </text>
+                    );
+                  })()}
                 </g>
               );
             })}
