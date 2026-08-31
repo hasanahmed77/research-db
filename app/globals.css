@@ -63,6 +63,19 @@ body {
   }
   .btn:hover { border-color: var(--accent); color: var(--accent); }
 
+  /* the one filled button: a page's single primary action, used sparingly */
+  .btn-cta {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0a0a0c;
+    font-weight: 600;
+  }
+  .btn-cta:hover {
+    background: color-mix(in srgb, var(--accent) 82%, #fff);
+    border-color: color-mix(in srgb, var(--accent) 82%, #fff);
+    color: #0a0a0c;
+  }
+
   /* inline affordances (remove, sign out) — not boxes, same accent on hover */
   .btn-ghost {
     @apply text-muted transition-colors;

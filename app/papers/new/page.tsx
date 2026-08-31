@@ -17,7 +17,7 @@ export default function NewPaper() {
         <input type="checkbox" name="is_stub" />
         stub — a reference I have not read, kept only for the citation graph
       </label>
-      <button className="btn">Add</button>
+      <button className="btn btn-cta">Add</button>
     </form>
   );
 }
