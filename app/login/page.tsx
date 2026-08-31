@@ -55,7 +55,7 @@ export default async function Login({
               </p>
             )}
             <form action={signInWithGoogle}>
-              <button className="btn btn-lit w-full gap-2.5" aria-label="Continue with Google">
+              <button className="btn w-full gap-2.5" aria-label="Continue with Google">
                 Continue with
                 {/* Google's own mark, unmodified, as their branding requires */}
                 <svg width="17" height="17" viewBox="0 0 48 48" aria-hidden focusable="false">
