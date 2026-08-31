@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { supabaseServer } from "@/lib/supabase/server";
+import { DeletePaper } from "@/components/DeletePaper";
+import { deletePaper } from "@/app/actions";
 import { STATUSES, type PaperCard } from "@/lib/types";
 
 /** read = done, reading = in flight; everything else stays quiet */
@@ -87,11 +89,16 @@ export default async function Library({ searchParams }: { searchParams: Promise<
 
       <ul className="divide-y divide-line border-y border-line">
         {cards.map((p) => (
-          <li key={p.id} className="card py-3">
-            <Link href={`/papers/${p.id}`}
-                  className="font-display font-semibold tracking-wide transition-colors hover:text-accent">
-              {p.title}
-            </Link>
+          <li key={p.id} className="card group py-3">
+            <div className="flex items-start gap-2">
+              <Link href={`/papers/${p.id}`}
+                    className="flex-1 font-display font-semibold tracking-wide transition-colors group-hover:text-accent">
+                {p.title}
+              </Link>
+              {/* stays out of the way until the card is hovered or tabbed into */}
+              <DeletePaper id={p.id} title={p.title} action={deletePaper}
+                           className="opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100" />
+            </div>
             <p className="mt-0.5 text-sm text-muted">
               {[p.authors?.join(", "), p.venue, p.year].filter(Boolean).join(" · ")}
             </p>

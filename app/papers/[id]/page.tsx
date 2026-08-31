@@ -5,6 +5,7 @@ import { AutoSave } from "@/components/AutoSave";
 import { NotesEditor } from "@/components/NotesEditor";
 import { PaperPicker } from "@/components/PaperPicker";
 import { DeletePaper } from "@/components/DeletePaper";
+import { EditableTitle } from "@/components/EditableTitle";
 import { PdfUpload } from "@/components/PdfUpload";
 import {
   addEdge, addExcerpt, addTag, deleteExcerpt, deletePaper, findPapers, removeEdge, removeTag,
@@ -62,8 +63,12 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="mx-auto max-w-5xl space-y-10">
       <section className="space-y-2">
-        <AutoSave action={updatePaper} hidden={{ id, field: "title" }} name="value"
-                  defaultValue={paper.title} className="field text-lg font-medium" />
+        <div className="flex items-start gap-2">
+          <div className="flex-1">
+            <EditableTitle id={id} initial={paper.title} action={updatePaper} />
+          </div>
+          <DeletePaper id={id} title={paper.title} action={deletePaper} className="pt-1" />
+        </div>
         <p className="text-sm text-muted">
           {[(authors ?? []).map((a) => (a.authors as unknown as { name: string } | null)?.name).filter(Boolean).join(", "),
             (paper.venues as { short_name: string } | null)?.short_name,
@@ -184,9 +189,6 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
 
       </section>
 
-      <section className="border-t border-line pt-4">
-        <DeletePaper id={id} title={paper.title} action={deletePaper} />
-      </section>
     </div>
   );
 }

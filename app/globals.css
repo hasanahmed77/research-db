@@ -92,6 +92,16 @@ body {
   .quiet:focus { border-bottom-color: var(--accent); }
   .quiet:hover  { border-bottom-color: var(--accent-dim); }
 
+  .icon-quiet {
+    @apply inline-flex h-7 w-7 shrink-0 items-center justify-center text-muted transition-colors;
+  }
+  .icon-quiet:hover { color: var(--accent); }
+
+  .icon-danger {
+    @apply inline-flex h-8 w-8 items-center justify-center text-muted transition-colors;
+  }
+  .icon-danger:hover { color: var(--danger); }
+
   .logo {
     font-family: var(--font-brand);
     @apply font-bold leading-none tracking-[0.04em];
@@ -129,7 +139,10 @@ body {
   .card {
     @apply border-l-2 border-line pl-3 transition-colors;
   }
-  .card:hover { border-left-color: var(--accent); }
+  .card:hover {
+    border-left-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 5%, transparent);
+  }
 
   mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: var(--fg); }
 }
