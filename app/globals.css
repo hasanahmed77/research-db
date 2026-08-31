@@ -56,9 +56,25 @@ body {
     from { opacity: 0; transform: translate3d(72px, 0, 0); }
     to   { opacity: 1; transform: translate3d(0, 0, 0); }
   }
+  @keyframes slide-from-top {
+    from { opacity: 0; transform: translate3d(0, -100%, 0); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
+  @keyframes slide-from-bottom {
+    from { opacity: 0; transform: translate3d(0, 100%, 0); }
+    to   { opacity: 1; transform: translate3d(0, 0, 0); }
+  }
   .slide-from-left,
-  .slide-from-right {
+  .slide-from-right,
+  .slide-from-top,
+  .slide-from-bottom {
     will-change: transform, opacity;
+  }
+  .slide-from-top {
+    animation: slide-from-top 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+  .slide-from-bottom {
+    animation: slide-from-bottom 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
   }
   /* An expo curve covered two thirds of the distance in the first sixth of the
      time, which reads as a dart followed by a crawl. This one spends its time
@@ -70,7 +86,8 @@ body {
     animation: slide-from-right 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.12s both;
   }
   @media (prefers-reduced-motion: reduce) {
-    .slide-from-left, .slide-from-right { animation: none; will-change: auto; }
+    .slide-from-left, .slide-from-right,
+    .slide-from-top, .slide-from-bottom { animation: none; will-change: auto; }
   }
 
   /* Loading placeholders: barely there. A breathing opacity rather than a

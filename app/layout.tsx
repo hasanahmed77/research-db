@@ -20,7 +20,10 @@ const spectral = Spectral({
   variable: "--font-logo",
 });
 
-export const metadata: Metadata = { title: "research-db" };
+export const metadata: Metadata = {
+  title: "Research/db",
+  description: "Build your personal research library, one paper at a time.",
+};
 
 const icon = {
   fill: "none",
@@ -46,7 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" className={`${chakra.variable} ${spectral.variable}`}>
       <body className="flex min-h-screen flex-col antialiased">
         <Fracture />
-        <header className="glass sticky top-0 z-20 border-x-0 border-t-0">
+        <header className="glass slide-from-top sticky top-0 z-20 border-x-0 border-t-0">
           <nav className="mx-auto flex max-w-5xl items-center gap-1 px-4 py-4 text-sm">
             <Link href="/" className="logo text-xl">
               Research<span className="text-accent">/</span>db
@@ -102,7 +105,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </header>
         <main className="flex flex-1 flex-col overflow-x-clip px-4 py-8">{children}</main>
 
-        <footer className="glass border-x-0 border-b-0">
+        {/* the wrapper keeps the footer's height in flow and clips the slide, so
+            sliding up from below does not add page scroll for the animation's
+            duration. clip rather than hidden, to avoid a scroll container. */}
+        <div className="overflow-clip">
+        <footer className="glass slide-from-bottom border-x-0 border-b-0">
           <div className="mx-auto flex max-w-5xl flex-wrap items-end gap-x-10 gap-y-6 px-4 py-8
                           text-xs text-muted">
             <div className="space-y-1.5">
@@ -131,6 +138,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </a>
           </div>
         </footer>
+        </div>
       </body>
     </html>
   );
