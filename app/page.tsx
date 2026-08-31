@@ -13,6 +13,7 @@ export default async function Library({ searchParams }: { searchParams: Promise<
   const supabase = await supabaseServer();
   const q = sp.q?.trim() ?? "";
   const includeStubs = sp.stubs === "1";
+  const filtered = Boolean(q || sp.status || sp.from || sp.to || includeStubs);
 
   let cards: PaperCard[] = [];
   let snippets = new Map<string, string>();
@@ -49,20 +50,37 @@ export default async function Library({ searchParams }: { searchParams: Promise<
 
   return (
     <div className="space-y-5">
-      <form className="flex flex-wrap items-center gap-2">
-        <input className="field flex-1 min-w-56" name="q" defaultValue={q}
-               placeholder="title, abstract, your notes, author, tag, cite key…" />
-        <select className="field w-32" name="status" defaultValue={sp.status ?? ""}>
-          <option value="">any status</option>
-          {STATUSES.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
-        </select>
-        <input className="field w-20" name="from" defaultValue={sp.from ?? ""} placeholder="from" />
-        <input className="field w-20" name="to" defaultValue={sp.to ?? ""} placeholder="to" />
-        <label className="field flex w-auto cursor-pointer items-center gap-2">
-          <input type="checkbox" name="stubs" value="1" defaultChecked={includeStubs} />
-          stubs
-        </label>
-        <button className="btn">search</button>
+      <form className="space-y-2.5">
+        <div className="flex items-center gap-2">
+          <input className="field flex-1" name="q" defaultValue={q}
+                 placeholder="title, abstract, your notes, author, tag, cite key…" />
+          <button className="btn">search</button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted">
+          <label className="flex items-center gap-1.5">
+            status
+            <select className="quiet" name="status" defaultValue={sp.status ?? ""}>
+              <option value="">any</option>
+              {STATUSES.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
+            </select>
+            <span aria-hidden className="-ml-1">▾</span>
+          </label>
+
+          <label className="flex items-center gap-1.5">
+            years
+            <input className="quiet w-12" name="from" defaultValue={sp.from ?? ""} placeholder="…" />
+            <span aria-hidden>–</span>
+            <input className="quiet w-12" name="to" defaultValue={sp.to ?? ""} placeholder="…" />
+          </label>
+
+          <label className="flex cursor-pointer items-center gap-1.5">
+            <input type="checkbox" name="stubs" value="1" defaultChecked={includeStubs} />
+            include stubs
+          </label>
+
+          {filtered && <Link href="/" className="ml-auto underline hover:text-accent">clear</Link>}
+        </div>
       </form>
 
       <p className="label">{cards.length} paper{cards.length === 1 ? "" : "s"}</p>

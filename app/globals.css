@@ -87,6 +87,16 @@ body {
     color: #0a0a0c;
   }
 
+  /* secondary controls: underline only, so they sit below the search box */
+  .quiet {
+    @apply appearance-none border-0 border-b bg-transparent px-1 py-0.5 text-xs outline-none
+           transition-colors;
+    border-bottom-color: var(--line);
+    color: var(--fg);
+  }
+  .quiet:focus { border-bottom-color: var(--accent); }
+  .quiet:hover  { border-bottom-color: var(--accent-dim); }
+
   /* navbar actions: icon only, no border */
   .nav-icon {
     @apply inline-flex h-9 w-9 items-center justify-center text-muted transition-colors;
