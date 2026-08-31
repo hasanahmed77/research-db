@@ -57,20 +57,20 @@ body {
     to   { opacity: 1; transform: translate3d(0, 0, 0); }
   }
   /* A strike, not a fade: a fast hit, a near-blackout, a weaker second hit,
-     then a dying flicker. Runs once, a second after load. */
+     then a dying flicker. Runs once, alongside the entrance slides.
+     Percentages rescaled so the whole strike fills the shorter duration. */
   @keyframes fracture-strike {
     0%   { opacity: 0; }
-    3%   { opacity: 0.85; }
-    6%   { opacity: 0.08; }
-    9%   { opacity: 0.55; }
-    13%  { opacity: 0.04; }
-    18%  { opacity: 0.28; }
-    30%  { opacity: 0; }
+    10%  { opacity: 0.85; }
+    20%  { opacity: 0.08; }
+    29%  { opacity: 0.55; }
+    42%  { opacity: 0.04; }
+    58%  { opacity: 0.28; }
     100% { opacity: 0; }
   }
   .fracture-strike {
     opacity: 0;
-    animation: fracture-strike 3.2s linear 1s 1 both;
+    animation: fracture-strike 1s linear 1 both;
   }
   @media (prefers-reduced-motion: reduce) {
     .fracture-strike { animation: none; }
