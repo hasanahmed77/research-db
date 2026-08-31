@@ -19,8 +19,12 @@ export async function proxy(request: NextRequest) {
     },
   );
 
+  const { pathname } = request.nextUrl;
+  // /auth/* carries the OAuth callback, which runs before a session exists
+  const isPublic = pathname.startsWith("/login") || pathname.startsWith("/auth");
+
   const { data } = await supabase.auth.getUser();
-  if (!data.user && !request.nextUrl.pathname.startsWith("/login")) {
+  if (!data.user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

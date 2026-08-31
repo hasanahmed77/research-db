@@ -99,10 +99,22 @@ npm run dev
 | `/` | library list; search box + status/year/stub filters, passed into the `search_papers` RPC |
 | `/papers/new` | add a paper, or a stub reference |
 | `/papers/[id]` | metadata, PDF upload, summary, the eight questions, tags, graph neighbourhood, excerpts |
-| `/login` | email + password |
+| `/login` | Google OAuth, plus email + password |
+| `/auth/callback` | exchanges the OAuth code for a session |
 
 `proxy.ts` (Next 16's rename of `middleware.ts`) refreshes the Supabase session and redirects
-signed-out visitors to `/login`.
+signed-out visitors to `/login`. `/auth/*` is exempt — the OAuth callback runs before a session
+exists, so gating it would bounce the code away before it could be exchanged.
+
+Google sign-in needs provider config that does not live in this repo:
+
+1. Google Cloud console → OAuth 2.0 Client ID (Web), authorised redirect URI
+   `https://<project-ref>.supabase.co/auth/v1/callback`.
+2. Supabase → Authentication → Sign In / Providers → Google → paste the client ID and secret.
+3. Supabase → Authentication → URL Configuration → add your app origins (e.g.
+   `http://localhost:3100`) to the redirect allow-list.
+
+Until step 2 is done the button returns `Unsupported provider: provider is not enabled`.
 
 Every editor on the paper page is its own one-field form that submits on blur — no page-wide save
 button, and no client state to keep in sync with the row.
