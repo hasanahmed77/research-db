@@ -25,9 +25,9 @@ const R = 15;
 const PAD = 40;
 const LABEL_W = 160;
 
-type Link_ = { id: string; rel: string; dir: "→" | "←" };
+type Link_ = { id: string; rel: string };
 type VNode = {
-  id: string; rel?: string; dir?: string;
+  id: string; rel?: string;
   children: VNode[];
   x: number; y: number; anchorX: number;   // anchorX decides which side the label sits
 };
@@ -45,8 +45,8 @@ export function TreeGraph({
     const m = new Map<string, Link_[]>();
     const push = (k: string, v: Link_) => m.set(k, [...(m.get(k) ?? []), v]);
     for (const e of edges) {
-      push(e.source, { id: e.target, rel: e.rel, dir: "→" });
-      push(e.target, { id: e.source, rel: e.rel, dir: "←" });
+      push(e.source, { id: e.target, rel: e.rel });
+      push(e.target, { id: e.source, rel: e.rel });
     }
     for (const list of m.values()) list.sort((a, b) => a.rel.localeCompare(b.rel));
     return m;
@@ -93,7 +93,7 @@ export function TreeGraph({
           seenEdge.add(key);
           if (!placed.has(l.id)) {
             const child: VNode = {
-              id: l.id, rel: l.rel, dir: l.dir, children: [], x: 0, y: 0, anchorX: 0,
+              id: l.id, rel: l.rel, children: [], x: 0, y: 0, anchorX: 0,
             };
             placed.set(l.id, child);
             cur.children.push(child);
@@ -160,6 +160,17 @@ export function TreeGraph({
 
   const clip = (t: string, n = 22) => (t.length > n ? t.slice(0, n) + "…" : t);
 
+  /** A line between two papers, trimmed so it meets the circles rather than covering them. */
+  const segment = (a: { x: number; y: number }, b: { x: number; y: number }) => {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const d = Math.hypot(dx, dy) || 1;
+    return {
+      x1: a.x + (dx / d) * R, y1: a.y + (dy / d) * R,
+      x2: b.x - (dx / d) * R, y2: b.y - (dy / d) * R,
+    };
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -182,22 +193,10 @@ export function TreeGraph({
       {graph ? (
         <div className="overflow-x-auto border border-line bg-surface">
           <svg width={graph.width} height={graph.height} className="mx-auto block">
-            {graph.loners > 0 && (
-              <>
-                <line x1={PAD} y1={graph.lonerTop - ROW / 2} x2={graph.width - PAD}
-                      y2={graph.lonerTop - ROW / 2}
-                      stroke="var(--line)" strokeDasharray="2 4" />
-                <text x={PAD} y={graph.lonerTop - ROW / 2 - 8} fontSize={10} fill="var(--muted)">
-                  not linked to anything yet
-                </text>
-              </>
-            )}
-
-            {/* the colour carries the relation; the legend explains it */}
+            {/* undirected: a link means the two papers are connected, either way */}
             {graph.flat.flatMap((n) =>
               n.children.map((c) => (
-                <line key={`e-${n.id}-${c.id}`}
-                      x1={n.x} y1={n.y + R} x2={c.x} y2={c.y - R}
+                <line key={`e-${n.id}-${c.id}`} {...segment(n, c)}
                       stroke={REL_COLOR[c.rel ?? ""] ?? "var(--muted)"} strokeWidth={1.3} />
               )))}
 
@@ -206,7 +205,7 @@ export function TreeGraph({
               const b = graph.byNode.get(e.b);
               if (!a || !b) return null;
               return (
-                <line key={`x-${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+                <line key={`x-${i}`} {...segment(a, b)}
                       stroke={REL_COLOR[e.rel] ?? "var(--muted)"} strokeWidth={1.1}
                       strokeDasharray="4 3" strokeOpacity={0.7} />
               );
