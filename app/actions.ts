@@ -124,10 +124,21 @@ export async function addEdge(fd: FormData) {
   const kind = str(fd, "kind");
   if (!from_id || !target || !kind) return;
 
-  const to_id = await resolveTarget(target);
+  const supabase = await supabaseServer();
+  let to_id = await resolveTarget(target);
+
+  // Most references you cite are not in the library yet. Rather than leaving the
+  // paper to create a stub and coming back, tick "new stub" and the typed text
+  // becomes the title of one. Opt-in, so a typo cannot silently mint a paper.
+  if (!to_id && fd.get("stub") === "on") {
+    const { data, error } = await supabase
+      .from("papers").insert({ title: target, is_stub: true }).select("id").single();
+    if (error) throw new Error(error.message);
+    to_id = data.id;
+  }
+
   if (!to_id || to_id === from_id) return;
 
-  const supabase = await supabaseServer();
   const note = str(fd, "note");
   const { error } =
     kind === "cites"

@@ -141,7 +141,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
         )}
         <details>
           <summary className="disclosure">+ tag</summary>
-          <form action={addTag} className="flex flex-wrap gap-2 pt-3">
+          <form action={addTag} className="flex flex-wrap items-center gap-2 pt-3">
             <input type="hidden" name="paper_id" value={id} />
             <input className="field w-48" name="name" placeholder="tag" required />
             <select className="field w-32" name="kind">
@@ -179,20 +179,25 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
         )}
         <details>
           <summary className="disclosure">+ link</summary>
-          <form action={addEdge} className="flex flex-wrap gap-2 pt-3">
+          <form action={addEdge} className="flex flex-wrap items-center gap-2 pt-3">
             <input type="hidden" name="paper_id" value={id} />
             <select className="field w-40" name="kind">
               <option value="cites">cites</option>
               {LINK_TYPES.map((k) => <option key={k} value={k}>{k.replace(/_/g, " ")}</option>)}
             </select>
             <input className="field w-72" name="target" list="paper-list"
-                   placeholder="cite key or exact title" required />
+                   placeholder="pick from your library, or type a new title" required />
             <datalist id="paper-list">
               {(allPapers ?? []).filter((p) => p.id !== id).map((p) => (
                 <option key={p.id} value={p.cite_key ?? p.title}>{p.title}</option>
               ))}
             </datalist>
             <input className="field w-56" name="note" placeholder="why (optional)" />
+            <label className="field flex w-auto cursor-pointer items-center gap-2 whitespace-nowrap"
+                   title="If the title above is not in your library, add it as a stub and link it">
+              <input type="checkbox" name="stub" />
+              new stub
+            </label>
             <button className="btn">link</button>
           </form>
         </details>
@@ -217,7 +222,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
         )}
         <details>
           <summary className="disclosure">+ excerpt</summary>
-          <form action={addExcerpt} className="flex flex-wrap gap-2 pt-3">
+          <form action={addExcerpt} className="flex flex-wrap items-center gap-2 pt-3">
             <input type="hidden" name="paper_id" value={id} />
             <input className="field w-16" name="page" placeholder="p." inputMode="numeric" />
             <input className="field flex-1 min-w-64" name="quote" placeholder="quote" required />
