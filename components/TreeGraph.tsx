@@ -57,7 +57,10 @@ export function TreeGraph({
   const [view, setView] = useState({ x: 0, y: 0, k: 1 });
 
   const svgRef = useRef<SVGSVGElement>(null);
-  const drag = useRef<{ x: number; y: number } | null>(null);
+  // sx/sy is where the press started, lx/ly the last position seen
+  const drag = useRef<
+    { sx: number; sy: number; lx: number; ly: number; id: number; panning: boolean } | null
+  >(null);
   // a drag that ends over a node must not also open it
   const moved = useRef(false);
 
@@ -251,21 +254,36 @@ export function TreeGraph({
             width="100%"
             height="100%"
             className="block h-full w-full touch-none"
-            style={{ cursor: drag.current ? "grabbing" : "grab" }}
+            style={{ cursor: "grab" }}
             onPointerDown={(e) => {
-              drag.current = { x: e.clientX, y: e.clientY };
+              drag.current = {
+                sx: e.clientX, sy: e.clientY, lx: e.clientX, ly: e.clientY,
+                id: e.pointerId, panning: false,
+              };
               moved.current = false;
-              e.currentTarget.setPointerCapture(e.pointerId);
             }}
             onPointerMove={(e) => {
-              if (!drag.current) return;
-              const dx = e.clientX - drag.current.x;
-              const dy = e.clientY - drag.current.y;
-              if (Math.abs(dx) + Math.abs(dy) > 3) moved.current = true;
-              drag.current = { x: e.clientX, y: e.clientY };
-              setView((v) => ({ ...v, x: v.x + dx, y: v.y + dy }));
+              const d = drag.current;
+              if (!d) return;
+              const dx = e.clientX - d.lx;
+              const dy = e.clientY - d.ly;
+              d.lx = e.clientX;
+              d.ly = e.clientY;
+
+              // Capture only once this is really a drag. Capturing on pointerdown
+              // retargets every later event — click included — to the <svg>, so a
+              // plain click never reached the circle underneath.
+              if (!d.panning && Math.abs(e.clientX - d.sx) + Math.abs(e.clientY - d.sy) > 4) {
+                d.panning = true;
+                moved.current = true;
+                e.currentTarget.setPointerCapture(d.id);
+              }
+              if (d.panning) setView((v) => ({ ...v, x: v.x + dx, y: v.y + dy }));
             }}
-            onPointerUp={() => { drag.current = null; }}
+            onPointerUp={(e) => {
+              if (drag.current?.panning) e.currentTarget.releasePointerCapture(drag.current.id);
+              drag.current = null;
+            }}
           >
           <g transform={`translate(${view.x},${view.y}) scale(${view.k})`}>
             {/* undirected: a link means the two papers are connected, either way */}
