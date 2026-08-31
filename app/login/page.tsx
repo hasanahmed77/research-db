@@ -5,16 +5,31 @@ import { AboutCopy } from "@/components/AboutCopy";
 
 async function signInWithGoogle() {
   "use server";
-  const supabase = await supabaseServer();
-  const origin = await siteOrigin();
 
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: { redirectTo: `${origin}/auth/callback` },
-  });
+  // redirect() works by throwing, so both calls stay outside the try — catching
+  // them would swallow the navigation. Anything that goes wrong here used to
+  // surface as a bare 500 with no way to see the cause.
+  let url: string | null = null;
+  let failure: string | null = null;
 
-  if (error) redirect(`/login?error=${encodeURIComponent(error.message)}`);
-  redirect(data.url);
+  try {
+    const supabase = await supabaseServer();
+    const origin = await siteOrigin();
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${origin}/auth/callback` },
+    });
+
+    if (error) throw new Error(error.message);
+    if (!data?.url) throw new Error("Supabase returned no authorize url");
+    url = data.url;
+  } catch (e) {
+    failure = e instanceof Error ? e.message : "sign in failed";
+  }
+
+  if (failure) redirect(`/login?error=${encodeURIComponent(failure)}`);
+  redirect(url!);
 }
 
 export default async function Login({
