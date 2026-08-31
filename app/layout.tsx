@@ -112,16 +112,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <p>a library you fill one paper at a time</p>
             </div>
 
-            <nav className="flex flex-wrap gap-x-5 gap-y-2">
-              <Link href="/about" className="transition-colors hover:text-accent">about</Link>
-              {signedIn && (
-                <>
-                  <Link href="/" className="transition-colors hover:text-accent">library</Link>
-                  <Link href="/graph" className="transition-colors hover:text-accent">graph</Link>
-                  <Link href="/papers/new" className="transition-colors hover:text-accent">add paper</Link>
-                </>
-              )}
-            </nav>
+            {signedIn && (
+              <nav className="flex flex-wrap gap-x-5 gap-y-2">
+                <Link href="/about" className="transition-colors hover:text-accent">about</Link>
+                <Link href="/" className="transition-colors hover:text-accent">library</Link>
+                <Link href="/graph" className="transition-colors hover:text-accent">graph</Link>
+                <Link href="/papers/new" className="transition-colors hover:text-accent">add paper</Link>
+              </nav>
+            )}
 
             <a href="https://github.com/hasanahmed77/research-db" target="_blank" rel="noreferrer"
                className="ml-auto transition-colors hover:text-accent">

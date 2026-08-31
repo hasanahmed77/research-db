@@ -102,6 +102,12 @@ body {
   }
   .btn:hover { border-color: var(--accent); color: var(--accent); }
 
+  /* Inverted: lit at rest, dimming under the cursor. Defined after .btn so its
+     hover rule wins on equal specificity. For the one call to action on a page
+     where nothing else competes for attention. */
+  .btn-lit { border-color: var(--accent); color: var(--accent); }
+  .btn-lit:hover { border-color: var(--accent-dim); color: var(--fg); }
+
   /* secondary controls: underline only, so they sit below the search box */
   .quiet {
     /* same height and type size as .field / .btn, just without the box */
