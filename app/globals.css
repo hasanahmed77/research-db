@@ -43,6 +43,20 @@ body {
 ::selection { background: var(--accent); color: #000000; }
 
 @layer components {
+  /* Loading placeholders: barely there. A breathing opacity rather than a
+     sweeping shimmer, so a fast route never flashes something distracting. */
+  .skeleton {
+    background: rgba(255, 255, 255, 0.045);
+    animation: skeleton-breathe 1.8s ease-in-out infinite;
+  }
+  @keyframes skeleton-breathe {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.85; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton { animation: none; opacity: 0.6; }
+  }
+
   /* one panel treatment, reused wherever a surface sits over the fracture */
   .glass {
     background: var(--glass);
