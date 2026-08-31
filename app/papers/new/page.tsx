@@ -1,10 +1,10 @@
 import { createPaper } from "@/app/actions";
 import { supabaseServer } from "@/lib/supabase/server";
-import { LINK_TYPES, TAG_KINDS, TAG_ROLES } from "@/lib/types";
+import { LINK_TYPES } from "@/lib/types";
 
 export default async function NewPaper() {
   const supabase = await supabaseServer();
-  const { data: papers } = await supabase.from("papers").select("id, title, cite_key").limit(500);
+  const { data: papers } = await supabase.from("papers").select("id, title").order("title").limit(500);
 
   return (
     <form action={createPaper} className="max-w-3xl space-y-8">
@@ -44,16 +44,8 @@ export default async function NewPaper() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="label">First tags <span className="normal-case opacity-60">(optional)</span></h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <input className="field w-72" name="name" placeholder="tag, another tag — comma separated" />
-          <select className="field w-32" name="kind">
-            {TAG_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
-          </select>
-          <select className="field w-40" name="role">
-            {TAG_ROLES.map((r) => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}
-          </select>
-        </div>
+        <h2 className="label">Tags <span className="normal-case opacity-60">(optional)</span></h2>
+        <input className="field" name="name" placeholder="tag, another tag — comma separated" />
       </section>
 
       <section className="space-y-3">
@@ -63,19 +55,13 @@ export default async function NewPaper() {
             <option value="cites">cites</option>
             {LINK_TYPES.map((k) => <option key={k} value={k}>{k.replace(/_/g, " ")}</option>)}
           </select>
-          <input className="field w-72" name="target" list="paper-list"
-                 placeholder="pick from your library, or type a new title" />
-          <datalist id="paper-list">
+          <select className="field flex-1 min-w-64" name="to_id" defaultValue="">
+            <option value="">no link yet</option>
             {(papers ?? []).map((p) => (
-              <option key={p.id} value={p.cite_key ?? p.title}>{p.title}</option>
+              <option key={p.id} value={p.id}>{p.title}</option>
             ))}
-          </datalist>
+          </select>
           <input className="field w-56" name="note" placeholder="why" />
-          <label className="field flex w-auto cursor-pointer items-center gap-2 whitespace-nowrap"
-                 title="If the title above is not in your library, add it as a stub and link it">
-            <input type="checkbox" name="stub" />
-            new stub
-          </label>
         </div>
       </section>
 

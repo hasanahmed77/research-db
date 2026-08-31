@@ -7,7 +7,7 @@ import { PdfUpload } from "@/components/PdfUpload";
 import {
   addEdge, addExcerpt, addTag, deleteExcerpt, removeEdge, removeTag, saveNotes, updatePaper,
 } from "@/app/actions";
-import { LINK_TYPES, STATUSES, TAG_KINDS, TAG_ROLES } from "@/lib/types";
+import { LINK_TYPES, STATUSES } from "@/lib/types";
 
 export default async function PaperPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,7 +25,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
     supabase.from("excerpts").select("id, page, quote, comment").eq("paper_id", id).order("page", { nullsFirst: false }),
     supabase.rpc("paper_graph", { root: id, depth: 1 }),
     supabase.from("paper_authors").select("ord, authors(name)").eq("paper_id", id).order("ord"),
-    supabase.from("papers").select("id, title, cite_key").limit(500),
+    supabase.from("papers").select("id, title").order("title").limit(500),
   ]);
 
   const noteBy = new Map((notes ?? []).map((n) => [n.prompt_id, n.body]));
@@ -106,14 +106,8 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
         )}
         <form action={addTag} className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="paper_id" value={id} />
-          <input className="field w-72" name="name" required
+          <input className="field flex-1 min-w-64" name="name" required
                  placeholder="tag, another tag — comma separated" />
-          <select className="field w-32" name="kind">
-            {TAG_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
-          </select>
-          <select className="field w-40" name="role">
-            {TAG_ROLES.map((r) => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}
-          </select>
           <button className="btn">add</button>
         </form>
 
@@ -147,19 +141,13 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
             <option value="cites">cites</option>
             {LINK_TYPES.map((k) => <option key={k} value={k}>{k.replace(/_/g, " ")}</option>)}
           </select>
-          <input className="field w-72" name="target" list="paper-list"
-                 placeholder="pick from your library, or type a new title" required />
-          <datalist id="paper-list">
+          <select className="field flex-1 min-w-64" name="to_id" required defaultValue="">
+            <option value="" disabled>pick a paper from your library</option>
             {(allPapers ?? []).filter((p) => p.id !== id).map((p) => (
-              <option key={p.id} value={p.cite_key ?? p.title}>{p.title}</option>
+              <option key={p.id} value={p.id}>{p.title}</option>
             ))}
-          </datalist>
+          </select>
           <input className="field w-56" name="note" placeholder="why (optional)" />
-          <label className="field flex w-auto cursor-pointer items-center gap-2 whitespace-nowrap"
-                 title="If the title above is not in your library, add it as a stub and link it">
-            <input type="checkbox" name="stub" />
-            new stub
-          </label>
           <button className="btn">link</button>
         </form>
 

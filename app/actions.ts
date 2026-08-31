@@ -57,24 +57,10 @@ async function applyTags(db: Db, paper_id: string, names: string[], kind: string
   return error ? { ok: false, message: error.message } : { ok: true };
 }
 
-/** Resolve the other paper by cite key, then exact title; optionally mint a stub. */
+/** Both ends must already exist; the picker only offers papers in the library. */
 async function applyEdge(
-  db: Db, from_id: string, target: string, kind: string,
-  note: string | null, createStub: boolean,
+  db: Db, from_id: string, to_id: string, kind: string, note: string | null,
 ) {
-  const { data: byKey } = await db
-    .from("papers").select("id").ilike("cite_key", target).maybeSingle();
-  const byTitle = byKey ? null : (await db
-    .from("papers").select("id").eq("title", target).limit(1).maybeSingle()).data;
-
-  let to_id: string | null = byKey?.id ?? byTitle?.id ?? null;
-
-  if (!to_id && createStub) {
-    const { data, error } = await db
-      .from("papers").insert({ title: target, is_stub: true }).select("id").single();
-    if (error) return { ok: false, message: error.message };
-    to_id = data.id;
-  }
   if (!to_id || to_id === from_id) return { ok: true };
 
   const { error } =
@@ -109,13 +95,12 @@ export async function createPaper(fd: FormData) {
   // an optional first tag and first connection, so filing needs no second trip
   const tagName = str(fd, "name");
   if (tagName) {
-    await applyTags(supabase, data.id, tagNames(tagName), str(fd, "kind") ?? "topic", str(fd, "role") ?? "about");
+    await applyTags(supabase, data.id, tagNames(tagName), "topic", "about");
   }
 
-  const target = str(fd, "target");
-  if (target) {
-    await applyEdge(supabase, data.id, target, str(fd, "edge_kind") ?? "cites",
-                    str(fd, "note"), fd.get("stub") === "on");
+  const to_id = str(fd, "to_id");
+  if (to_id) {
+    await applyEdge(supabase, data.id, to_id, str(fd, "edge_kind") ?? "cites", str(fd, "note"));
   }
 
   redirect(`/papers/${data.id}`);
@@ -176,7 +161,7 @@ export async function addTag(fd: FormData) {
   if (!paper_id || !name) return;
 
   const supabase = await supabaseServer();
-  await applyTags(supabase, paper_id, tagNames(name), str(fd, "kind") ?? "topic", str(fd, "role") ?? "about");
+  await applyTags(supabase, paper_id, tagNames(name), "topic", "about");
   revalidatePath(`/papers/${paper_id}`);
 }
 
@@ -193,12 +178,12 @@ export async function removeTag(fd: FormData) {
 
 export async function addEdge(fd: FormData) {
   const from_id = str(fd, "paper_id");
-  const target = str(fd, "target");
+  const to_id = str(fd, "to_id");
   const kind = str(fd, "kind");
-  if (!from_id || !target || !kind) return;
+  if (!from_id || !to_id || !kind) return;
 
   const supabase = await supabaseServer();
-  await applyEdge(supabase, from_id, target, kind, str(fd, "note"), fd.get("stub") === "on");
+  await applyEdge(supabase, from_id, to_id, kind, str(fd, "note"));
   revalidatePath(`/papers/${from_id}`);
 }
 
