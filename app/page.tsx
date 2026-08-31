@@ -22,7 +22,7 @@ export default async function Library({ searchParams }: { searchParams: Promise<
 
   if (q) {
     // filters go into the RPC so they apply before the rank cut
-    const { data: hits } = await supabase.rpc("search_papers", {
+    const { data: hits, error: searchError } = await supabase.rpc("search_papers", {
       q,
       max_results: 100,
       filter_status: sp.status || null,
@@ -32,6 +32,7 @@ export default async function Library({ searchParams }: { searchParams: Promise<
       include_stubs: includeStubs,
     });
 
+    if (searchError) throw new Error(searchError.message);
     const ids: string[] = (hits ?? []).map((h: { id: string }) => h.id);
     snippets = new Map((hits ?? []).map((h: { id: string; snippet: string }) => [h.id, h.snippet]));
 
@@ -46,7 +47,8 @@ export default async function Library({ searchParams }: { searchParams: Promise<
     if (sp.from) query = query.gte("year", Number(sp.from));
     if (sp.to) query = query.lte("year", Number(sp.to));
     if (!includeStubs) query = query.eq("is_stub", false);
-    const { data } = await query;
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
     cards = data ?? [];
   }
 

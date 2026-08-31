@@ -24,7 +24,17 @@ export async function proxy(request: NextRequest) {
   const isPublic =
     pathname.startsWith("/login") || pathname.startsWith("/auth") || pathname === "/about";
 
-  const { data } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getUser();
+
+  // A failure to reach the auth server is not the same as being signed out.
+  // Without this, a blip logs you out visually and drops you on the marketing
+  // page mid-session. If the session cookie is still present, let the request
+  // through and let the page's own error boundary explain itself.
+  const hasSession = request.cookies
+    .getAll()
+    .some((c) => c.name.startsWith("sb-") && c.name.includes("auth-token"));
+  if (!data.user && error && hasSession) return response;
+
   if (!data.user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
