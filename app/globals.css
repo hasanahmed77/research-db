@@ -58,8 +58,10 @@ body {
   }
   /* One hit and a decay. A fast rise then a fall away, with no second flash.
      Runs once, alongside the entrance slides.
-     Fires at 0.75s, just before the last column lands at 0.92s, so the flash
-     catches the tail of the entrance rather than following a pause. */
+     Timed so the peak lands exactly as the entrance ends. The last column
+     finishes at 920ms (0.12s delay + 0.8s travel) and the flash peaks 80ms in
+     (8% of 1s), so the delay is 840ms. Move the peak keyframe or the slide
+     timing and this needs recomputing. */
   @keyframes fracture-strike {
     0%   { opacity: 0; }
     8%   { opacity: 0.85; }
@@ -69,7 +71,7 @@ body {
   }
   .fracture-strike {
     opacity: 0;
-    animation: fracture-strike 1s linear 0.75s 1 both;
+    animation: fracture-strike 1s linear 0.84s 1 both;
   }
   @media (prefers-reduced-motion: reduce) {
     .fracture-strike { animation: none; }
