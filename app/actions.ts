@@ -111,6 +111,28 @@ export async function createPaper(fd: FormData) {
   redirect(`/papers/${data.id}`);
 }
 
+/**
+ * Removes the paper and, by cascade, its notes, excerpts, tags, citations and
+ * links. The stored PDF goes too — the row is the only reference to it, so
+ * leaving the object behind would orphan it in the bucket for good.
+ */
+export async function deletePaper(fd: FormData) {
+  const id = str(fd, "id");
+  if (!id) return;
+
+  const supabase = await supabaseServer();
+  const { data: paper } = await supabase
+    .from("papers").select("pdf_path").eq("id", id).maybeSingle();
+
+  if (paper?.pdf_path) await supabase.storage.from("papers").remove([paper.pdf_path]);
+
+  const { error } = await supabase.from("papers").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/");
+  redirect("/");
+}
+
 export async function updatePaper(fd: FormData): Promise<SaveResult> {
   const id = str(fd, "id");
   const field = str(fd, "field");

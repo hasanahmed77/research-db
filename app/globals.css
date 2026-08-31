@@ -11,6 +11,7 @@
   --color-cyan: var(--cyan);
   --color-danger: var(--danger);
   --font-display: var(--font-chakra), ui-sans-serif, system-ui, sans-serif;
+  --font-brand: var(--font-logo), var(--font-chakra), ui-sans-serif, sans-serif;
 }
 
 /* Committed to the dark look — the palette only reads as itself on black. */
@@ -90,6 +91,11 @@ body {
   }
   .quiet:focus { border-bottom-color: var(--accent); }
   .quiet:hover  { border-bottom-color: var(--accent-dim); }
+
+  .logo {
+    font-family: var(--font-brand);
+    @apply font-bold leading-none tracking-[0.04em];
+  }
 
   /* navbar actions: icon only, no border */
   .nav-icon {

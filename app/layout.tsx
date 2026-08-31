@@ -1,13 +1,20 @@
 import "./globals.css";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Chakra_Petch } from "next/font/google";
+import { Chakra_Petch, Rajdhani } from "next/font/google";
 import { supabaseServer } from "@/lib/supabase/server";
 
 const chakra = Chakra_Petch({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
   variable: "--font-chakra",
+});
+
+// Rajdhani is the typeface Cyberpunk 2077 uses for its interface
+const rajdhani = Rajdhani({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-logo",
 });
 
 export const metadata: Metadata = { title: "research-db" };
@@ -25,12 +32,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { data } = await supabase.auth.getUser();
 
   return (
-    <html lang="en" className={chakra.variable}>
+    <html lang="en" className={`${chakra.variable} ${rajdhani.variable}`}>
       <body className="min-h-screen antialiased">
         <header className="border-b border-line bg-surface/80 backdrop-blur">
           <nav className="mx-auto flex max-w-5xl items-center gap-1 px-4 py-4 text-sm">
-            <Link href="/" className="font-display text-base font-semibold tracking-wide">
-              research<span className="text-accent">/</span>db
+            <Link href="/" className="logo text-xl">
+              Research<span className="text-accent">/</span>db
             </Link>
             {data.user && (
               <div className="ml-auto flex items-center gap-1">

@@ -4,10 +4,11 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { AutoSave } from "@/components/AutoSave";
 import { NotesEditor } from "@/components/NotesEditor";
 import { PaperPicker } from "@/components/PaperPicker";
+import { DeletePaper } from "@/components/DeletePaper";
 import { PdfUpload } from "@/components/PdfUpload";
 import {
-  addEdge, addExcerpt, addTag, deleteExcerpt, findPapers, removeEdge, removeTag, saveNotes,
-  updatePaper,
+  addEdge, addExcerpt, addTag, deleteExcerpt, deletePaper, findPapers, removeEdge, removeTag,
+  saveNotes, updatePaper,
 } from "@/app/actions";
 import { EDGE_KINDS, STATUSES } from "@/lib/types";
 
@@ -181,6 +182,10 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
           <button className="btn">add</button>
         </form>
 
+      </section>
+
+      <section className="border-t border-line pt-4">
+        <DeletePaper id={id} title={paper.title} action={deletePaper} />
       </section>
     </div>
   );
