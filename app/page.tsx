@@ -58,8 +58,9 @@ export default async function Library({ searchParams }: { searchParams: Promise<
         </select>
         <input className="field w-20" name="from" defaultValue={sp.from ?? ""} placeholder="from" />
         <input className="field w-20" name="to" defaultValue={sp.to ?? ""} placeholder="to" />
-        <label className="chip cursor-pointer">
-          <input type="checkbox" name="stubs" value="1" defaultChecked={includeStubs} /> stubs
+        <label className="field flex w-auto cursor-pointer items-center gap-2">
+          <input type="checkbox" name="stubs" value="1" defaultChecked={includeStubs} />
+          stubs
         </label>
         <button className="btn">search</button>
       </form>

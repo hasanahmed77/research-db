@@ -49,10 +49,14 @@ body {
   }
 
   .field {
-    @apply w-full border border-line bg-surface px-2.5 py-1.5 text-sm outline-none
+    /* leading-5 pins the content box so <select> matches <input> and .btn */
+    @apply w-full border border-line bg-surface px-2.5 py-1.5 text-sm leading-5 outline-none
            transition-colors;
     border-left-width: 2px;
   }
+  /* <select> resolves 1px shorter than <input> from UA styling; pin the row height.
+     textarea is excluded so it can still grow with rows. */
+  .field:not(textarea) { min-height: 2.125rem; }
   .field:focus {
     border-left-color: var(--accent);
     background: #14141b;
