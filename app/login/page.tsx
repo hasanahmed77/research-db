@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
+import { AboutCopy } from "@/components/AboutCopy";
 
 async function signInWithGoogle() {
   "use server";
@@ -27,19 +28,21 @@ export default async function Login({
   const { error } = await searchParams;
   return (
     <div className="flex flex-1 items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-5 text-center">
-        <h1 className="font-display text-xl font-semibold tracking-wide">Sign in</h1>
-        <p className="text-sm leading-relaxed text-muted">
-          Build your personal research library, one paper at a time.
-        </p>
-        {error && (
-          <p className="border border-danger/50 bg-danger/10 px-3 py-2 text-sm text-danger">
-            {error}
-          </p>
-        )}
-        <form action={signInWithGoogle}>
-          <button className="btn w-full">Continue with Google</button>
-        </form>
+      <div className="grid w-full max-w-5xl items-center gap-10 md:grid-cols-2 md:gap-16">
+        <AboutCopy withHeading={false} />
+
+        <div className="w-full max-w-sm space-y-5 md:justify-self-end md:border-l md:border-line
+                        md:pl-16">
+          <h1 className="font-display text-xl font-semibold tracking-wide">Sign in</h1>
+          {error && (
+            <p className="border border-danger/50 bg-danger/10 px-3 py-2 text-sm text-danger">
+              {error}
+            </p>
+          )}
+          <form action={signInWithGoogle}>
+            <button className="btn w-full">Continue with Google</button>
+          </form>
+        </div>
       </div>
     </div>
   );
