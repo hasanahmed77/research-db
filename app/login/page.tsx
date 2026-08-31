@@ -30,7 +30,7 @@ export default async function Login({
       <h1 className="font-display text-xl font-semibold tracking-wide">Sign in</h1>
       {error && <p className="border border-danger/50 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
       <form action={signInWithGoogle}>
-        <button className="btn btn-primary w-full">Continue with Google</button>
+        <button className="btn w-full">Continue with Google</button>
       </form>
     </div>
   );

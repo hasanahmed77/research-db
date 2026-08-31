@@ -109,7 +109,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
                 <span>{t.name}</span>
                 <span className="opacity-60">{t.kind}</span>
                 {pt.role !== "about" && <span className="opacity-60">· {pt.role.replace(/_/g, " ")}</span>}
-                <button className="opacity-60 hover:opacity-100" aria-label="remove">×</button>
+                <button className="btn-ghost" aria-label="remove">×</button>
               </form>
             );
           })}
@@ -123,7 +123,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
           <select className="field w-40" name="role">
             {TAG_ROLES.map((r) => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}
           </select>
-          <button className="btn btn-primary">add</button>
+          <button className="btn">add</button>
         </form>
       </section>
 
@@ -138,7 +138,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
                 <input type="hidden" name="from_id" value={n.from} />
                 <input type="hidden" name="to_id" value={n.to} />
                 <input type="hidden" name="kind" value={n.rel} />
-                <button className="text-muted hover:text-fg" aria-label="remove">×</button>
+                <button className="btn-ghost" aria-label="remove">×</button>
               </form>
             </li>
           ))}
@@ -158,7 +158,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
             ))}
           </datalist>
           <input className="field w-56" name="note" placeholder="why (optional)" />
-          <button className="btn btn-primary">link</button>
+          <button className="btn">link</button>
         </form>
       </section>
 
@@ -172,7 +172,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
               <form action={deleteExcerpt}>
                 <input type="hidden" name="id" value={e.id} />
                 <input type="hidden" name="paper_id" value={id} />
-                <button className="text-xs text-muted hover:text-fg">remove</button>
+                <button className="btn-ghost text-xs">remove</button>
               </form>
             </li>
           ))}
@@ -182,7 +182,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
           <input className="field w-16" name="page" placeholder="p." inputMode="numeric" />
           <input className="field flex-1 min-w-64" name="quote" placeholder="quote" required />
           <input className="field w-56" name="comment" placeholder="comment" />
-          <button className="btn btn-primary">add</button>
+          <button className="btn">add</button>
         </form>
       </section>
     </div>

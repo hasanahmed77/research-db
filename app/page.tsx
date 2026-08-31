@@ -61,7 +61,7 @@ export default async function Library({ searchParams }: { searchParams: Promise<
         <label className="chip cursor-pointer">
           <input type="checkbox" name="stubs" value="1" defaultChecked={includeStubs} /> stubs
         </label>
-        <button className="btn btn-primary">search</button>
+        <button className="btn">search</button>
       </form>
 
       <p className="label">{cards.length} paper{cards.length === 1 ? "" : "s"}</p>

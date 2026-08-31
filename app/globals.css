@@ -63,8 +63,11 @@ body {
   }
   .btn:hover { border-color: var(--accent); color: var(--accent); }
 
-  .btn-primary { border-color: var(--accent); color: var(--accent); }
-  .btn-primary:hover { background: var(--accent); color: #0a0a0c; }
+  /* inline affordances (remove, sign out) — not boxes, same accent on hover */
+  .btn-ghost {
+    @apply text-muted transition-colors;
+  }
+  .btn-ghost:hover { color: var(--accent); }
 
   .chip {
     @apply inline-flex items-center gap-1 border border-line bg-surface px-2 py-0.5
