@@ -124,3 +124,11 @@ button, and no client state to keep in sync with the row.
 
 Adding an edge resolves the target by exact cite key first, then exact title. The datalist is
 capped at 500 papers; past that it should move to the search RPC.
+
+## Next
+
+- `/graph` — whole-library node-link view. Nodes are papers, edges are citations plus the
+  interpretive links, distinguishable by relation type; clicking a node opens that paper.
+  `paper_graph(root, depth)` already returns the right shape and accepts a depth the UI currently
+  pins to 1.
+- `is_key` on the citation form — the schema has the flag, the UI has no checkbox for it.
