@@ -26,11 +26,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </Link>
             {data.user && (
               <>
-                <Link href="/papers/new" className="btn-ghost">
+                <Link href="/papers/new" className="btn-sm">
                   add paper
                 </Link>
                 <form action="/auth/signout" method="post" className="ml-auto">
-                  <button className="btn-ghost">sign out</button>
+                  <button className="btn-sm">sign out</button>
                 </form>
               </>
             )}

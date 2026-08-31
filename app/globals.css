@@ -66,21 +66,23 @@ body {
   /* the one filled button: a page's single primary action, used sparingly */
   .btn-cta {
     background: var(--accent);
-    border-color: var(--accent);
+    /* lighter rim so the border stays visible against the fill */
+    border-color: color-mix(in srgb, var(--accent) 55%, #fff);
     color: #0a0a0c;
     font-weight: 600;
   }
   .btn-cta:hover {
     background: color-mix(in srgb, var(--accent) 82%, #fff);
-    border-color: color-mix(in srgb, var(--accent) 82%, #fff);
+    border-color: #fff;
     color: #0a0a0c;
   }
 
-  /* inline affordances (remove, sign out) — not boxes, same accent on hover */
-  .btn-ghost {
-    @apply text-muted transition-colors;
+  /* small bordered button, for inline actions like remove */
+  .btn-sm {
+    @apply border border-line bg-surface px-1.5 py-0 text-[11px] leading-5 text-muted
+           transition-colors;
   }
-  .btn-ghost:hover { color: var(--accent); }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
 
   .chip {
     @apply inline-flex items-center gap-1 border border-line bg-surface px-2 py-0.5

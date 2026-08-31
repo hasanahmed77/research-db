@@ -109,7 +109,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
                 <span>{t.name}</span>
                 <span className="opacity-60">{t.kind}</span>
                 {pt.role !== "about" && <span className="opacity-60">· {pt.role.replace(/_/g, " ")}</span>}
-                <button className="btn-ghost" aria-label="remove">×</button>
+                <button className="btn-sm" aria-label="remove">×</button>
               </form>
             );
           })}
@@ -138,7 +138,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
                 <input type="hidden" name="from_id" value={n.from} />
                 <input type="hidden" name="to_id" value={n.to} />
                 <input type="hidden" name="kind" value={n.rel} />
-                <button className="btn-ghost" aria-label="remove">×</button>
+                <button className="btn-sm" aria-label="remove">×</button>
               </form>
             </li>
           ))}
@@ -172,7 +172,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
               <form action={deleteExcerpt}>
                 <input type="hidden" name="id" value={e.id} />
                 <input type="hidden" name="paper_id" value={id} />
-                <button className="btn-ghost text-xs">remove</button>
+                <button className="btn-sm">remove</button>
               </form>
             </li>
           ))}
