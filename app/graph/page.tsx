@@ -2,12 +2,7 @@ import Link from "next/link";
 import { supabaseServer } from "@/lib/supabase/server";
 import { TreeGraph, type TreeEdge, type TreeNodeData } from "@/components/TreeGraph";
 
-export default async function GraphPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ root?: string }>;
-}) {
-  const { root } = await searchParams;
+export default async function GraphPage() {
   const supabase = await supabaseServer();
 
   // the adjacency has to be complete for expansion to be instant; both sets are
@@ -30,8 +25,7 @@ export default async function GraphPage({
           Nothing to draw yet. <Link href="/papers/new" className="underline">Add a paper</Link>.
         </p>
       ) : (
-        <TreeGraph papers={nodes} edges={links}
-                   initialRoot={root ?? nodes[0]?.id ?? null} />
+        <TreeGraph papers={nodes} edges={links} />
       )}
     </div>
   );

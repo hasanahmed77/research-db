@@ -19,25 +19,24 @@ const STATUS_COLOR: Record<string, string> = {
   archived: "var(--line)",
 };
 
-const COL = 190;   // horizontal room per leaf — titles need it
-const ROW = 104;   // vertical gap per level
+const COL = 190;
+const ROW = 104;
 const R = 15;
 const PAD = 40;
-const LABEL_W = 160;  // side labels need horizontal room of their own
+const LABEL_W = 160;
 
 type Link_ = { id: string; rel: string; dir: "→" | "←" };
 type VNode = {
-  key: string; id: string; rel?: string; dir?: string;
-  isCycle: boolean; hidden: number; children: VNode[];
-  x: number; y: number; depth: number;
+  id: string; rel?: string; dir?: string;
+  hidden: number; children: VNode[];
+  x: number; y: number; anchorX: number;   // anchorX decides which side the label sits
 };
 
 export function TreeGraph({
-  papers, edges, initialRoot,
+  papers, edges,
 }: {
   papers: TreeNodeData[];
   edges: TreeEdge[];
-  initialRoot: string | null;
 }) {
   const router = useRouter();
   const byId = useMemo(() => new Map(papers.map((p) => [p.id, p])), [papers]);
@@ -53,14 +52,14 @@ export function TreeGraph({
     return m;
   }, [edges]);
 
-  const [root, setRoot] = useState<string | null>(initialRoot);
   const [query, setQuery] = useState("");
-  // everything is open by default; this holds the exceptions
+  const [focus, setFocus] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return papers.filter((p) => !q || p.title.toLowerCase().includes(q)).slice(0, 8);
+    if (!q) return [];
+    return papers.filter((p) => p.title.toLowerCase().includes(q)).slice(0, 8);
   }, [papers, query]);
 
   const toggle = (id: string) =>
@@ -71,121 +70,155 @@ export function TreeGraph({
     });
 
   /**
-   * Breadth-first from the root, so every paper is drawn exactly once at its
-   * shortest distance. The first edge that reaches a paper becomes its branch;
-   * any further edge between two papers already on screen is drawn as a single
-   * extra line between them rather than repeating the paper further down. That
-   * is what keeps "A relates to B" from appearing as two separate nodes.
+   * Every paper is drawn, exactly once. Linked papers form clusters laid out in
+   * rows by distance from the best-connected paper in that cluster; clusters sit
+   * side by side. A paper with no links is simply a cluster of one, parked in a
+   * grid below — no root has to be invented for it to belong to.
    */
   const graph = useMemo(() => {
-    if (!root || !byId.has(root)) return null;
-
+    const degree = (id: string) => (adj.get(id) ?? []).length;
     const placed = new Map<string, VNode>();
-    const rootNode: VNode = {
-      key: root, id: root, isCycle: false, hidden: 0, children: [], x: 0, y: 0, depth: 0,
-    };
-    placed.set(root, rootNode);
-
-    const queue: VNode[] = [rootNode];
-    const seenEdge = new Set<string>();
+    const roots: VNode[] = [];
     const cross: { a: string; b: string; rel: string }[] = [];
+    const seenEdge = new Set<string>();
+    let column = 0;
 
-    while (queue.length) {
-      const cur = queue.shift()!;
-      if (collapsed.has(cur.id)) continue;
+    const linked = papers.filter((p) => degree(p.id) > 0)
+      .sort((a, b) => degree(b.id) - degree(a.id));
 
-      for (const l of adj.get(cur.id) ?? []) {
-        const key = [cur.id, l.id].sort().join("|") + "|" + l.rel;
-        if (seenEdge.has(key)) continue;   // the pair is stored from both ends
-        seenEdge.add(key);
+    for (const p of linked) {
+      if (placed.has(p.id)) continue;
 
-        if (!placed.has(l.id)) {
-          const child: VNode = {
-            key: l.id, id: l.id, rel: l.rel, dir: l.dir, isCycle: false,
-            hidden: 0, children: [], x: 0, y: 0, depth: cur.depth + 1,
-          };
-          placed.set(l.id, child);
-          cur.children.push(child);
-          queue.push(child);
-        } else if (l.id !== cur.id) {
-          cross.push({ a: cur.id, b: l.id, rel: l.rel });
+      const rootNode: VNode = { id: p.id, hidden: 0, children: [], x: 0, y: 0, anchorX: 0 };
+      placed.set(p.id, rootNode);
+      const queue = [rootNode];
+
+      while (queue.length) {
+        const cur = queue.shift()!;
+        if (collapsed.has(cur.id)) continue;
+        for (const l of adj.get(cur.id) ?? []) {
+          const key = [cur.id, l.id].sort().join("|") + "|" + l.rel;
+          if (seenEdge.has(key)) continue;
+          seenEdge.add(key);
+          if (!placed.has(l.id)) {
+            const child: VNode = {
+              id: l.id, rel: l.rel, dir: l.dir, hidden: 0, children: [], x: 0, y: 0, anchorX: 0,
+            };
+            placed.set(l.id, child);
+            cur.children.push(child);
+            queue.push(child);
+          } else if (l.id !== cur.id) {
+            cross.push({ a: cur.id, b: l.id, rel: l.rel });
+          }
         }
       }
+
+      const place = (n: VNode, depth: number) => {
+        n.y = PAD + depth * ROW;
+        if (n.children.length === 0) {
+          n.x = PAD + column * COL + COL / 2;
+          column += 1;
+        } else {
+          n.children.forEach((c) => place(c, depth + 1));
+          n.x = (n.children[0].x + n.children[n.children.length - 1].x) / 2;
+        }
+      };
+      place(rootNode, 0);
+      column += 1;                       // a gap before the next cluster
+      roots.push(rootNode);
     }
 
     for (const n of placed.values()) {
       if (collapsed.has(n.id)) n.hidden = (adj.get(n.id) ?? []).length;
     }
 
-    let column = 0;
-    const place = (n: VNode, depth: number) => {
-      n.y = PAD + depth * ROW;
-      if (n.children.length === 0) {
-        n.x = PAD + column * COL + COL / 2;
-        column += 1;
-      } else {
-        n.children.forEach((c) => place(c, depth + 1));
-        n.x = (n.children[0].x + n.children[n.children.length - 1].x) / 2;
-      }
+    // labels lean away from the middle of their own cluster
+    const applyAnchor = (root: VNode) => {
+      const walk = (n: VNode, cx: number) => {
+        n.anchorX = cx;
+        n.children.forEach((c) => walk(c, cx));
+      };
+      walk(root, root.x);
     };
-    place(rootNode, 0);
+    roots.forEach(applyAnchor);
 
-    // shift everything so the root sits on the vertical centre line, and make
-    // the canvas symmetric about it so "centred" holds however lopsided the
-    // branches are. Labels sit outside the nodes, so they need room too.
+    const clusterBottom = placed.size
+      ? Math.max(...[...placed.values()].map((n) => n.y))
+      : PAD;
+
+    // unlinked papers, packed under the clusters
+    const loners = papers.filter((p) => degree(p.id) === 0);
+    const perRow = Math.max(3, Math.min(6, Math.ceil(Math.sqrt(loners.length))));
+    const lonerTop = clusterBottom + (loners.length ? ROW : 0);
+    loners.forEach((p, i) => {
+      const n: VNode = {
+        id: p.id, hidden: 0, children: [], x: PAD + (i % perRow) * COL + COL / 2,
+        y: lonerTop + Math.floor(i / perRow) * 78, anchorX: 0,
+      };
+      n.anchorX = n.x;                   // no cluster to lean away from: label underneath
+      placed.set(p.id, n);
+    });
+
     const flat = [...placed.values()];
-    const rootX = rootNode.x;
-    const half =
-      Math.max(rootX - Math.min(...flat.map((n) => n.x)),
-               Math.max(...flat.map((n) => n.x)) - rootX) + LABEL_W;
-    const width = Math.max(2 * half + PAD * 2, 560);
-    const dx = width / 2 - rootX;
-    flat.forEach((n) => { n.x += dx; });
+    if (!flat.length) return null;
 
-    const height = Math.max(...flat.map((n) => n.y)) + PAD + 20;
-    return { flat, cross, byNode: placed, width, height, centreX: width / 2 };
-  }, [root, adj, byId, collapsed]);
+    const width = Math.max(
+      Math.max(...flat.map((n) => n.x)) + LABEL_W + PAD,
+      column * COL + PAD * 2,
+      560,
+    );
+    const height = Math.max(...flat.map((n) => n.y)) + PAD + 24;
+    return { flat, roots, cross, byNode: placed, width, height, loners: loners.length, lonerTop };
+  }, [papers, adj, collapsed]);
 
   const clip = (t: string, n = 22) => (t.length > n ? t.slice(0, n) + "…" : t);
 
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <input className="field" value={query} placeholder="root the tree at…"
-               aria-label="find a paper to root the tree at"
+        <input className="field" value={query} placeholder="find a paper…"
+               aria-label="find a paper in the graph"
                onChange={(e) => setQuery(e.target.value)} />
-        <div className="flex flex-wrap gap-1.5">
-          {matches.map((p) => (
-            <button key={p.id} type="button"
-                    className={`btn text-xs ${p.id === root ? "border-accent text-accent" : ""}`}
-                    onClick={() => { setRoot(p.id); setCollapsed(new Set()); }}>
-              {clip(p.title, 44)}
-            </button>
-          ))}
-        </div>
+        {matches.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {matches.map((p) => (
+              <button key={p.id} type="button"
+                      className={`btn text-xs ${p.id === focus ? "border-accent text-accent" : ""}`}
+                      onClick={() => setFocus(p.id === focus ? null : p.id)}>
+                {clip(p.title, 44)}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {graph ? (
         <div className="overflow-x-auto border border-line bg-surface">
           <svg width={graph.width} height={graph.height} className="mx-auto block">
-            {graph.flat.flatMap((n) =>
-              n.children.map((c) => {
-                const mx = (n.x + c.x) / 2;
-                const my = (n.y + c.y) / 2;
-                return (
-                  <g key={`e-${n.id}-${c.id}`}>
-                    <line x1={n.x} y1={n.y + R} x2={c.x} y2={c.y - R}
-                          stroke={REL_COLOR[c.rel ?? ""] ?? "var(--muted)"} strokeWidth={1.3} />
-                    <text x={mx} y={my} textAnchor="middle" fontSize={9}
-                          fill={REL_COLOR[c.rel ?? ""] ?? "var(--muted)"}
-                          style={{ paintOrder: "stroke" }} stroke="var(--surface)" strokeWidth={3}>
-                      {c.rel} {c.dir}
-                    </text>
-                  </g>
-                );
-              }))}
+            {graph.loners > 0 && (
+              <>
+                <line x1={PAD} y1={graph.lonerTop - ROW / 2} x2={graph.width - PAD}
+                      y2={graph.lonerTop - ROW / 2}
+                      stroke="var(--line)" strokeDasharray="2 4" />
+                <text x={PAD} y={graph.lonerTop - ROW / 2 - 8} fontSize={10} fill="var(--muted)">
+                  not linked to anything yet
+                </text>
+              </>
+            )}
 
-            {/* an edge between two papers already drawn: one line, no repeat node */}
+            {graph.flat.flatMap((n) =>
+              n.children.map((c) => (
+                <g key={`e-${n.id}-${c.id}`}>
+                  <line x1={n.x} y1={n.y + R} x2={c.x} y2={c.y - R}
+                        stroke={REL_COLOR[c.rel ?? ""] ?? "var(--muted)"} strokeWidth={1.3} />
+                  <text x={(n.x + c.x) / 2} y={(n.y + c.y) / 2} textAnchor="middle" fontSize={9}
+                        fill={REL_COLOR[c.rel ?? ""] ?? "var(--muted)"}
+                        style={{ paintOrder: "stroke" }} stroke="var(--surface)" strokeWidth={3}>
+                    {c.rel} {c.dir}
+                  </text>
+                </g>
+              )))}
+
             {graph.cross.map((e, i) => {
               const a = graph.byNode.get(e.a);
               const b = graph.byNode.get(e.b);
@@ -202,9 +235,19 @@ export function TreeGraph({
               if (!p) return null;
               const color = STATUS_COLOR[p.status] ?? "var(--muted)";
               const hasKids = n.children.length > 0 || n.hidden > 0;
+              const lit = focus === n.id;
+              const side = n.x - n.anchorX;
+              const anchor = Math.abs(side) < 1 ? "middle" : side < 0 ? "end" : "start";
+              const tx = anchor === "middle" ? n.x : side < 0 ? n.x - R - 7 : n.x + R + 7;
+              // a cluster root would otherwise sit its label on top of its own edges
+              const ty = anchor !== "middle" ? n.y + 4
+                : n.children.length > 0 ? n.y - R - 9
+                : n.y + R + 15;
               return (
                 <g key={n.id}>
                   <title>{p.title}</title>
+                  {lit && <circle cx={n.x} cy={n.y} r={R + 5} fill="none"
+                                  stroke="var(--accent)" strokeWidth={1.4} />}
                   <circle
                     cx={n.x} cy={n.y} r={R}
                     fill={p.is_stub ? "var(--bg)" : color}
@@ -220,35 +263,22 @@ export function TreeGraph({
                       {n.hidden}
                     </text>
                   )}
-                  {(() => {
-                    const side = n.x - graph.centreX;
-                    const isRoot = n.depth === 0;
-                    // root above, left branch to the left, right branch to the
-                    // right — labels lean away from the drawing, never over it
-                    const anchor = isRoot || Math.abs(side) < 1
-                      ? "middle" : side < 0 ? "end" : "start";
-                    const tx = anchor === "middle" ? n.x : side < 0 ? n.x - R - 7 : n.x + R + 7;
-                    const ty = isRoot ? n.y - R - 9
-                      : anchor === "middle" ? n.y + R + 15 : n.y + 4;
-                    return (
-                      <text x={tx} y={ty} textAnchor={anchor} fontSize={11}
-                            fill="var(--fg)" style={{ cursor: "pointer" }}
-                            onClick={() => router.push(`/papers/${n.id}`)}>
-                        {clip(p.title)}
-                      </text>
-                    );
-                  })()}
+                  <text x={tx} y={ty} textAnchor={anchor} fontSize={11}
+                        fill={lit ? "var(--accent)" : "var(--fg)"} style={{ cursor: "pointer" }}
+                        onClick={() => router.push(`/papers/${n.id}`)}>
+                    {clip(p.title)}
+                  </text>
                 </g>
               );
             })}
           </svg>
         </div>
       ) : (
-        <p className="text-sm text-muted">Pick a paper above to root the tree.</p>
+        <p className="text-sm text-muted">No papers yet.</p>
       )}
 
       <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-        <span>click a circle to collapse it · click a title to open the paper · a dashed line is a further connection between two papers already shown</span>
+        <span>click a circle to collapse it · click a title to open the paper · dashed lines are extra connections</span>
         <span className="ml-auto flex flex-wrap gap-x-3">
           <span style={{ color: "var(--muted)" }}>— cites</span>
           <span style={{ color: "var(--cyan)" }}>— related</span>
