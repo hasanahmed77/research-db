@@ -36,7 +36,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" className={`${chakra.variable} ${rajdhani.variable}`}>
       <body className="min-h-screen antialiased">
         <Fracture />
-        <header className="glass border-x-0 border-t-0">
+        <header className="glass sticky top-0 z-20 border-x-0 border-t-0">
           <nav className="mx-auto flex max-w-5xl items-center gap-1 px-4 py-4 text-sm">
             <Link href="/" className="logo text-xl">
               Research<span className="text-accent">/</span>db
