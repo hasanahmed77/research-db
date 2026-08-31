@@ -49,7 +49,7 @@ export default async function Library({ searchParams }: { searchParams: Promise<
   }
 
   return (
-    <div className="space-y-5">
+    <div className="mx-auto max-w-5xl space-y-5">
       <form className="space-y-2.5">
         <div className="flex items-center gap-2">
           <input className="field flex-1" name="q" defaultValue={q}

@@ -4,7 +4,7 @@ import { EDGE_KINDS } from "@/lib/types";
 
 export default function NewPaper() {
   return (
-    <form action={createPaper} className="max-w-3xl space-y-8">
+    <form action={createPaper} className="mx-auto max-w-3xl space-y-8">
       <h1 className="font-display text-xl font-semibold tracking-wide">Add a paper</h1>
 
       <section className="space-y-3">

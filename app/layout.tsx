@@ -64,7 +64,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {/* thin accent rule under the bar */}
           <div className="h-px bg-gradient-to-r from-accent/60 via-cyan/25 to-transparent" />
         </header>
-        <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <main className="px-4 py-8">{children}</main>
       </body>
     </html>
   );

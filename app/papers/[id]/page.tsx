@@ -59,7 +59,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
     : null;
 
   return (
-    <div className="space-y-10">
+    <div className="mx-auto max-w-5xl space-y-10">
       <section className="space-y-2">
         <AutoSave action={updatePaper} hidden={{ id, field: "title" }} name="value"
                   defaultValue={paper.title} className="field text-lg font-medium" />

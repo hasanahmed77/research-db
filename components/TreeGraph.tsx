@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export type TreeNodeData = { id: string; title: string; status: string; is_stub: boolean };
@@ -54,6 +54,12 @@ export function TreeGraph({
 
   const [query, setQuery] = useState("");
   const [focus, setFocus] = useState<string | null>(null);
+  const [view, setView] = useState({ x: 0, y: 0, k: 1 });
+
+  const svgRef = useRef<SVGSVGElement>(null);
+  const drag = useRef<{ x: number; y: number } | null>(null);
+  // a drag that ends over a node must not also open it
+  const moved = useRef(false);
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -160,6 +166,49 @@ export function TreeGraph({
 
   const clip = (t: string, n = 22) => (t.length > n ? t.slice(0, n) + "…" : t);
 
+  /** Scale the drawing to the pane and centre it. */
+  const fit = useCallback(() => {
+    const el = svgRef.current;
+    if (!el || !graph) return;
+    const { width: vw, height: vh } = el.getBoundingClientRect();
+    if (!vw || !vh) return;
+    const k = Math.min(1, Math.min(vw / graph.width, vh / graph.height));
+    setView({ k, x: (vw - graph.width * k) / 2, y: (vh - graph.height * k) / 2 });
+  }, [graph]);
+
+  useEffect(() => { fit(); }, [fit]);
+
+  // wheel has to be a native non-passive listener, or preventDefault is ignored
+  // and the page scrolls behind the zoom
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      setView((v) => {
+        const k = Math.min(4, Math.max(0.2, v.k * (e.deltaY < 0 ? 1.12 : 1 / 1.12)));
+        const s = k / v.k;                       // keep the point under the cursor still
+        return { k, x: px - (px - v.x) * s, y: py - (py - v.y) * s };
+      });
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  const zoomBy = (factor: number) =>
+    setView((v) => {
+      const el = svgRef.current;
+      const rect = el?.getBoundingClientRect();
+      const px = (rect?.width ?? 0) / 2;
+      const py = (rect?.height ?? 0) / 2;
+      const k = Math.min(4, Math.max(0.2, v.k * factor));
+      const s = k / v.k;
+      return { k, x: px - (px - v.x) * s, y: py - (py - v.y) * s };
+    });
+
   /** A line between two papers, trimmed so it meets the circles rather than covering them. */
   const segment = (a: { x: number; y: number }, b: { x: number; y: number }) => {
     const dx = b.x - a.x;
@@ -191,8 +240,34 @@ export function TreeGraph({
       </div>
 
       {graph ? (
-        <div className="overflow-x-auto border border-line bg-surface">
-          <svg width={graph.width} height={graph.height} className="mx-auto block">
+        <div className="relative h-[calc(100vh-14rem)] min-h-96 overflow-hidden border border-line bg-surface">
+          <div className="absolute right-2 top-2 z-10 flex gap-1">
+            <button type="button" className="btn-sm" onClick={() => zoomBy(1.2)} aria-label="zoom in">+</button>
+            <button type="button" className="btn-sm" onClick={() => zoomBy(1 / 1.2)} aria-label="zoom out">−</button>
+            <button type="button" className="btn-sm" onClick={fit}>fit</button>
+          </div>
+          <svg
+            ref={svgRef}
+            width="100%"
+            height="100%"
+            className="block h-full w-full touch-none"
+            style={{ cursor: drag.current ? "grabbing" : "grab" }}
+            onPointerDown={(e) => {
+              drag.current = { x: e.clientX, y: e.clientY };
+              moved.current = false;
+              e.currentTarget.setPointerCapture(e.pointerId);
+            }}
+            onPointerMove={(e) => {
+              if (!drag.current) return;
+              const dx = e.clientX - drag.current.x;
+              const dy = e.clientY - drag.current.y;
+              if (Math.abs(dx) + Math.abs(dy) > 3) moved.current = true;
+              drag.current = { x: e.clientX, y: e.clientY };
+              setView((v) => ({ ...v, x: v.x + dx, y: v.y + dy }));
+            }}
+            onPointerUp={() => { drag.current = null; }}
+          >
+          <g transform={`translate(${view.x},${view.y}) scale(${view.k})`}>
             {/* undirected: a link means the two papers are connected, either way */}
             {graph.flat.flatMap((n) =>
               n.children.map((c) => (
@@ -216,7 +291,7 @@ export function TreeGraph({
               if (!p) return null;
               const color = STATUS_COLOR[p.status] ?? "var(--muted)";
               const lit = focus === n.id;
-              const open = () => router.push(`/papers/${n.id}`);
+              const open = () => { if (!moved.current) router.push(`/papers/${n.id}`); };
               const side = n.x - n.anchorX;
               const anchor = Math.abs(side) < 1 ? "middle" : side < 0 ? "end" : "start";
               const tx = anchor === "middle" ? n.x : side < 0 ? n.x - R - 7 : n.x + R + 7;
@@ -246,6 +321,7 @@ export function TreeGraph({
                 </g>
               );
             })}
+          </g>
           </svg>
         </div>
       ) : (
@@ -253,7 +329,7 @@ export function TreeGraph({
       )}
 
       <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-        <span>click a paper to open it · dashed lines are further connections between papers already drawn</span>
+        <span>drag to move · scroll to zoom · click a paper to open it · dashed lines are further connections</span>
         <span className="ml-auto flex flex-wrap gap-x-3">
           <span style={{ color: "var(--muted)" }}>— cites</span>
           <span style={{ color: "var(--cyan)" }}>— related</span>
