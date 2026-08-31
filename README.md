@@ -9,7 +9,7 @@ fixed set of reading questions attached to each one.
 
 | table | notes |
 |---|---|
-| `papers` | title, abstract, year, DOI/arXiv, `pdf_path` (storage), your `summary`, `status`, `rating` |
+| `papers` | title, abstract, year, DOI/arXiv, `cite_key`, `pdf_path` (storage), your `summary`, `status`, `rating` |
 | `authors`, `venues` | deduped per user |
 | `tags` | *one* table for topics, methods, datasets, tasks, metrics, applications — `kind` distinguishes them, `parent_id` nests them |
 | `collections` | reading lists / per-project bibliographies |
@@ -36,10 +36,19 @@ flipping the flag.
 
 ## Search
 
-`search_papers(q text, max_results int)` → `(id, rank, snippet)`. One RPC covering title,
-abstract, your summary, your notes, your excerpts, author names and tag names. Terms are OR'd for
-recall and a row matching *every* term ranks 2×; trigram matching catches typo'd titles. The
-snippet comes back with `<mark>` tags. RLS applies, so it only sees your rows.
+```
+search_papers(q, max_results, filter_status, year_from, year_to, tag_ids, include_stubs)
+  -> (id, rank, snippet)
+```
+
+One RPC covering title, abstract, your summary, your notes, your excerpts, author names, tag names
+and `cite_key`. Terms are OR'd for recall and a row matching *every* term ranks 2×; trigram
+matching catches typo'd titles; an exact `cite_key` ranks top as an identifier lookup. The snippet
+comes back with `<mark>` tags. RLS applies, so it only sees your rows.
+
+All arguments after `q` are optional. Filters are applied **inside** the query, before the rank
+cut — passing them means you get the top N *matching rows*, not the top N overall with the
+non-matching ones thrown away afterwards.
 
 `paper_cards` — a view with authors, tags, note completeness and citation counts pre-aggregated,
 so the list page is one query and no N+1.
@@ -56,8 +65,8 @@ so the list page is one query and no N+1.
 supabase db push          # or: psql "$DATABASE_URL" -f each migration in order, then seed.sql
 ```
 
-Migrations run in filename order: `0001_schema` → `0002_search` → `0003_graph` → `0004_rls` →
-`0005_storage`, then `seed.sql`.
+Migrations run in filename order, `0001_schema` through `0006_cite_key_and_filters`, then
+`seed.sql`.
 
 ## Notes for the Next.js app
 
@@ -65,6 +74,8 @@ Migrations run in filename order: `0001_schema` → `0002_search` → `0003_grap
   the service role in the browser.
 - PDFs go in the private `papers` bucket at `<user_id>/<paper_id>.pdf` — the storage policy
   requires that first path segment. Serve them with signed URLs.
+- `cite_key` is unique per user, case-insensitively — it is what `\cite{...}` in your LaTeX
+  resolves against.
 - Generate types with `supabase gen types typescript --linked > types/db.ts`.
 - Semantic search later is additive: `create extension vector`, add
   `embedding vector(1536)` to `papers` with an HNSW index, and blend the distance into
