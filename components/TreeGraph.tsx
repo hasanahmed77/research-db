@@ -28,7 +28,7 @@ type Link_ = { id: string; rel: string; dir: "→" | "←" };
 type VNode = {
   key: string; id: string; rel?: string; dir?: string;
   isCycle: boolean; hidden: number; children: VNode[];
-  x: number; y: number;
+  x: number; y: number; depth: number;
 };
 
 export function TreeGraph({
@@ -54,38 +54,69 @@ export function TreeGraph({
 
   const [root, setRoot] = useState<string | null>(initialRoot);
   const [query, setQuery] = useState("");
-  const [open, setOpen] = useState<Set<string>>(new Set(["r"]));
+  // everything is open by default; this holds the exceptions
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
     return papers.filter((p) => !q || p.title.toLowerCase().includes(q)).slice(0, 8);
   }, [papers, query]);
 
-  const toggle = (key: string) =>
-    setOpen((prev) => {
+  const toggle = (id: string) =>
+    setCollapsed((prev) => {
       const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
 
-  // Build only what is on screen, then lay it out: leaves take the next column,
-  // parents centre over their children. Expansion stops at an ancestor so cycles
-  // in the graph cannot make the tree infinite.
-  const tree = useMemo(() => {
+  /**
+   * Breadth-first from the root, so every paper is drawn exactly once at its
+   * shortest distance. The first edge that reaches a paper becomes its branch;
+   * any further edge between two papers already on screen is drawn as a single
+   * extra line between them rather than repeating the paper further down. That
+   * is what keeps "A relates to B" from appearing as two separate nodes.
+   */
+  const graph = useMemo(() => {
     if (!root || !byId.has(root)) return null;
-    let column = 0;
 
-    const build = (id: string, ancestors: string[], key: string,
-                   rel?: string, dir?: string): VNode => {
-      const isCycle = ancestors.includes(id);
-      const links = isCycle ? [] : (adj.get(id) ?? []);
-      const expanded = open.has(key);
-      const children = expanded
-        ? links.map((c, i) => build(c.id, [...ancestors, id], `${key}>${c.id}:${c.rel}:${i}`, c.rel, c.dir))
-        : [];
-      return { key, id, rel, dir, isCycle, hidden: expanded ? 0 : links.length, children, x: 0, y: 0 };
+    const placed = new Map<string, VNode>();
+    const rootNode: VNode = {
+      key: root, id: root, isCycle: false, hidden: 0, children: [], x: 0, y: 0, depth: 0,
     };
+    placed.set(root, rootNode);
 
+    const queue: VNode[] = [rootNode];
+    const seenEdge = new Set<string>();
+    const cross: { a: string; b: string; rel: string }[] = [];
+
+    while (queue.length) {
+      const cur = queue.shift()!;
+      if (collapsed.has(cur.id)) continue;
+
+      for (const l of adj.get(cur.id) ?? []) {
+        const key = [cur.id, l.id].sort().join("|") + "|" + l.rel;
+        if (seenEdge.has(key)) continue;   // the pair is stored from both ends
+        seenEdge.add(key);
+
+        if (!placed.has(l.id)) {
+          const child: VNode = {
+            key: l.id, id: l.id, rel: l.rel, dir: l.dir, isCycle: false,
+            hidden: 0, children: [], x: 0, y: 0, depth: cur.depth + 1,
+          };
+          placed.set(l.id, child);
+          cur.children.push(child);
+          queue.push(child);
+        } else if (l.id !== cur.id) {
+          cross.push({ a: cur.id, b: l.id, rel: l.rel });
+        }
+      }
+    }
+
+    for (const n of placed.values()) {
+      if (collapsed.has(n.id)) n.hidden = (adj.get(n.id) ?? []).length;
+    }
+
+    let column = 0;
     const place = (n: VNode, depth: number) => {
       n.y = PAD + depth * ROW;
       if (n.children.length === 0) {
@@ -96,18 +127,13 @@ export function TreeGraph({
         n.x = (n.children[0].x + n.children[n.children.length - 1].x) / 2;
       }
     };
+    place(rootNode, 0);
 
-    const r = build(root, [], "r");
-    place(r, 0);
-
-    const flat: VNode[] = [];
-    const walk = (n: VNode) => { flat.push(n); n.children.forEach(walk); };
-    walk(r);
-
-    const width = Math.max(column * COL + PAD * 2, 640);
+    const flat = [...placed.values()];
+    const width = Math.max(column * COL + PAD * 2, 560);
     const height = Math.max(...flat.map((n) => n.y)) + PAD + 34;
-    return { root: r, flat, width, height };
-  }, [root, adj, byId, open]);
+    return { flat, cross, byNode: placed, width, height };
+  }, [root, adj, byId, collapsed]);
 
   const clip = (t: string, n = 22) => (t.length > n ? t.slice(0, n) + "…" : t);
 
@@ -121,22 +147,22 @@ export function TreeGraph({
           {matches.map((p) => (
             <button key={p.id} type="button"
                     className={`btn text-xs ${p.id === root ? "border-accent text-accent" : ""}`}
-                    onClick={() => { setRoot(p.id); setOpen(new Set(["r"])); }}>
+                    onClick={() => { setRoot(p.id); setCollapsed(new Set()); }}>
               {clip(p.title, 44)}
             </button>
           ))}
         </div>
       </div>
 
-      {tree ? (
+      {graph ? (
         <div className="overflow-x-auto border border-line bg-surface">
-          <svg width={tree.width} height={tree.height} className="block">
-            {tree.flat.flatMap((n) =>
+          <svg width={graph.width} height={graph.height} className="mx-auto block">
+            {graph.flat.flatMap((n) =>
               n.children.map((c) => {
                 const mx = (n.x + c.x) / 2;
                 const my = (n.y + c.y) / 2;
                 return (
-                  <g key={`e-${c.key}`}>
+                  <g key={`e-${n.id}-${c.id}`}>
                     <line x1={n.x} y1={n.y + R} x2={c.x} y2={c.y - R}
                           stroke={REL_COLOR[c.rel ?? ""] ?? "var(--muted)"} strokeWidth={1.3} />
                     <text x={mx} y={my} textAnchor="middle" fontSize={9}
@@ -148,13 +174,25 @@ export function TreeGraph({
                 );
               }))}
 
-            {tree.flat.map((n) => {
+            {/* an edge between two papers already drawn: one line, no repeat node */}
+            {graph.cross.map((e, i) => {
+              const a = graph.byNode.get(e.a);
+              const b = graph.byNode.get(e.b);
+              if (!a || !b) return null;
+              return (
+                <line key={`x-${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+                      stroke={REL_COLOR[e.rel] ?? "var(--muted)"} strokeWidth={1.1}
+                      strokeDasharray="4 3" strokeOpacity={0.7} />
+              );
+            })}
+
+            {graph.flat.map((n) => {
               const p = byId.get(n.id);
               if (!p) return null;
               const color = STATUS_COLOR[p.status] ?? "var(--muted)";
-              const openable = n.hidden > 0;
+              const hasKids = n.children.length > 0 || n.hidden > 0;
               return (
-                <g key={n.key}>
+                <g key={n.id}>
                   <title>{p.title}</title>
                   <circle
                     cx={n.x} cy={n.y} r={R}
@@ -162,10 +200,10 @@ export function TreeGraph({
                     fillOpacity={p.is_stub ? 1 : 0.22}
                     stroke={color} strokeWidth={1.8}
                     strokeDasharray={p.is_stub ? "3 2" : undefined}
-                    style={{ cursor: openable || n.children.length ? "pointer" : "default" }}
-                    onClick={() => (openable || n.children.length) && toggle(n.key)}
+                    style={{ cursor: hasKids ? "pointer" : "default" }}
+                    onClick={() => hasKids && toggle(n.id)}
                   />
-                  {openable && (
+                  {n.hidden > 0 && (
                     <text x={n.x} y={n.y + 3.5} textAnchor="middle" fontSize={10}
                           fill="var(--fg)" style={{ pointerEvents: "none" }}>
                       {n.hidden}
@@ -178,11 +216,6 @@ export function TreeGraph({
                   >
                     {clip(p.title)}
                   </text>
-                  {n.isCycle && (
-                    <text x={n.x} y={n.y + R + 26} textAnchor="middle" fontSize={9} fill="var(--muted)">
-                      above
-                    </text>
-                  )}
                 </g>
               );
             })}
@@ -193,7 +226,7 @@ export function TreeGraph({
       )}
 
       <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-        <span>click a circle to expand · click a title to open the paper · the number is hidden children</span>
+        <span>click a circle to collapse it · click a title to open the paper · a dashed line is a further connection between two papers already shown</span>
         <span className="ml-auto flex flex-wrap gap-x-3">
           <span style={{ color: "var(--muted)" }}>— cites</span>
           <span style={{ color: "var(--cyan)" }}>— related</span>
