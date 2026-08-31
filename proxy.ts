@@ -21,7 +21,8 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   // /auth/* carries the OAuth callback, which runs before a session exists
-  const isPublic = pathname.startsWith("/login") || pathname.startsWith("/auth");
+  const isPublic =
+    pathname.startsWith("/login") || pathname.startsWith("/auth") || pathname === "/about";
 
   const { data } = await supabase.auth.getUser();
   if (!data.user && !isPublic) {

@@ -34,15 +34,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className={`${chakra.variable} ${spectral.variable}`}>
-      <body className="min-h-screen antialiased">
+      <body className="flex min-h-screen flex-col antialiased">
         <Fracture />
         <header className="glass sticky top-0 z-20 border-x-0 border-t-0">
           <nav className="mx-auto flex max-w-5xl items-center gap-1 px-4 py-4 text-sm">
             <Link href="/" className="logo text-xl">
               Research<span className="text-accent">/</span>db
             </Link>
-            {data.user && (
-              <div className="ml-auto flex items-center gap-1">
+            <div className="ml-auto flex items-center gap-1">
+              <Link href="/about" className="nav-icon" aria-label="About" title="About">
+                <svg width="19" height="19" viewBox="0 0 24 24" {...icon}>
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 11v5.5" />
+                  <path d="M12 7.6v.9" />
+                </svg>
+              </Link>
+              {data.user && (
+                <>
                 <Link href="/graph" className="nav-icon" aria-label="Graph" title="Graph">
                   <svg width="19" height="19" viewBox="0 0 24 24" {...icon}>
                     <circle cx="6" cy="6" r="2.4" />
@@ -67,13 +75,38 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     </svg>
                   </button>
                 </form>
-              </div>
-            )}
+                </>
+              )}
+            </div>
           </nav>
           {/* thin accent rule under the bar */}
           <div className="h-px bg-gradient-to-r from-accent/60 via-cyan/25 to-transparent" />
         </header>
-        <main className="px-4 py-8">{children}</main>
+        <main className="flex flex-1 flex-col px-4 py-8">{children}</main>
+
+        <footer className="glass border-x-0 border-b-0">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-4
+                          text-xs text-muted">
+            <span className="logo text-sm text-fg">
+              Research<span className="text-accent">/</span>db
+            </span>
+            <span>a library you fill one paper at a time</span>
+            <nav className="flex gap-4">
+              <Link href="/about" className="transition-colors hover:text-accent">about</Link>
+            </nav>
+            {data.user && (
+              <nav className="flex gap-4">
+                <Link href="/" className="transition-colors hover:text-accent">library</Link>
+                <Link href="/graph" className="transition-colors hover:text-accent">graph</Link>
+                <Link href="/papers/new" className="transition-colors hover:text-accent">add paper</Link>
+              </nav>
+            )}
+            <a href="https://github.com/hasanahmed77/research-db" target="_blank" rel="noreferrer"
+               className="ml-auto transition-colors hover:text-accent">
+              source
+            </a>
+          </div>
+        </footer>
       </body>
     </html>
   );
