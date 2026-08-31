@@ -56,19 +56,16 @@ body {
     from { opacity: 0; transform: translate3d(72px, 0, 0); }
     to   { opacity: 1; transform: translate3d(0, 0, 0); }
   }
-  /* A strike, not a fade: a fast hit, a near-blackout, a weaker second hit,
-     then a dying flicker. Runs once, alongside the entrance slides.
-     Percentages rescaled so the whole strike fills the shorter duration.
+  /* One hit and a decay. A fast rise then a fall away, with no second flash.
+     Runs once, alongside the entrance slides.
      The 0.46s delay is half the entrance span: the sign-in column finishes at
      0.12s delay plus 0.8s of travel, so the strike lands at its midpoint.
      Change either and this wants changing with it. */
   @keyframes fracture-strike {
     0%   { opacity: 0; }
-    10%  { opacity: 0.85; }
-    20%  { opacity: 0.08; }
-    29%  { opacity: 0.55; }
-    42%  { opacity: 0.04; }
-    58%  { opacity: 0.28; }
+    8%   { opacity: 0.85; }
+    30%  { opacity: 0.3; }
+    60%  { opacity: 0.08; }
     100% { opacity: 0; }
   }
   .fracture-strike {
