@@ -50,13 +50,10 @@ export default async function NewPaper() {
 
       <section className="space-y-3">
         <h2 className="label">Links <span className="normal-case opacity-60">(optional)</span></h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <select className="field w-40" name="edge_kind">
-            <option value="cites">cites</option>
-            {LINK_TYPES.map((k) => <option key={k} value={k}>{k.replace(/_/g, " ")}</option>)}
-          </select>
-          <input className="field flex-1 min-w-56" name="note" placeholder="why (applies to all ticked)" />
-        </div>
+        <select className="field w-40" name="edge_kind">
+          <option value="cites">cites</option>
+          {LINK_TYPES.map((k) => <option key={k} value={k}>{k}</option>)}
+        </select>
 
         {(papers ?? []).length === 0 ? (
           <p className="text-sm text-muted">

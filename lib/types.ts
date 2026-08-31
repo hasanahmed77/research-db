@@ -8,10 +8,8 @@ export type LinkType =
 export const STATUSES: PaperStatus[] = ["to_read", "reading", "read", "archived"];
 export const TAG_KINDS: TagKind[] = ["topic", "method", "dataset", "task", "metric", "application"];
 export const TAG_ROLES: TagRole[] = ["about", "introduces", "uses", "evaluates_on", "improves", "compares_against"];
-export const LINK_TYPES: LinkType[] = [
-  "extends", "contradicts", "reproduces", "applies",
-  "alternative_to", "surveys", "prerequisite_for", "related",
-];
+/** Selectable in the UI. The enum still holds the rest, so older rows stay valid. */
+export const LINK_TYPES: LinkType[] = ["related", "contradicts"];
 
 export type PaperCard = {
   id: string;

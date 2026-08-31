@@ -147,7 +147,6 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
               <option key={p.id} value={p.id}>{p.title}</option>
             ))}
           </select>
-          <input className="field w-56" name="note" placeholder="why (optional)" />
           <button className="btn">link</button>
         </form>
 

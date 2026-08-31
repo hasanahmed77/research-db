@@ -62,18 +62,16 @@ async function applyTags(db: Db, paper_id: string, names: string[], kind: string
  * Every target of one relation goes in a single upsert, so linking eight
  * references costs one write rather than eight.
  */
-async function applyEdges(
-  db: Db, from_id: string, to_ids: string[], kind: string, note: string | null,
-) {
+async function applyEdges(db: Db, from_id: string, to_ids: string[], kind: string) {
   const targets = [...new Set(to_ids)].filter((t) => t && t !== from_id);
   if (!targets.length) return { ok: true };
 
   const { error } =
     kind === "cites"
       ? await db.from("citations").upsert(
-          targets.map((cited_id) => ({ citing_id: from_id, cited_id, note })))
+          targets.map((cited_id) => ({ citing_id: from_id, cited_id })))
       : await db.from("paper_links").upsert(
-          targets.map((to_id) => ({ from_id, to_id, kind, note })));
+          targets.map((to_id) => ({ from_id, to_id, kind })));
   return error ? { ok: false, message: error.message } : { ok: true };
 }
 
@@ -107,7 +105,7 @@ export async function createPaper(fd: FormData) {
 
   const toIds = fd.getAll("to_ids").filter((v): v is string => typeof v === "string");
   if (toIds.length) {
-    await applyEdges(supabase, data.id, toIds, str(fd, "edge_kind") ?? "cites", str(fd, "note"));
+    await applyEdges(supabase, data.id, toIds, str(fd, "edge_kind") ?? "cites");
   }
 
   redirect(`/papers/${data.id}`);
@@ -190,7 +188,7 @@ export async function addEdge(fd: FormData) {
   if (!from_id || !to_id || !kind) return;
 
   const supabase = await supabaseServer();
-  await applyEdges(supabase, from_id, [to_id], kind, str(fd, "note"));
+  await applyEdges(supabase, from_id, [to_id], kind);
   revalidatePath(`/papers/${from_id}`);
 }
 
