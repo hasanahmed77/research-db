@@ -58,9 +58,8 @@ body {
   }
   /* One hit and a decay. A fast rise then a fall away, with no second flash.
      Runs once, alongside the entrance slides.
-     The 0.92s delay is when the last entrance finishes: the sign-in column at
-     0.12s delay plus 0.8s of travel. Change either and this wants changing
-     with it. */
+     Fires at 0.75s, just before the last column lands at 0.92s, so the flash
+     catches the tail of the entrance rather than following a pause. */
   @keyframes fracture-strike {
     0%   { opacity: 0; }
     8%   { opacity: 0.85; }
@@ -70,7 +69,7 @@ body {
   }
   .fracture-strike {
     opacity: 0;
-    animation: fracture-strike 1s linear 0.92s 1 both;
+    animation: fracture-strike 1s linear 0.75s 1 both;
   }
   @media (prefers-reduced-motion: reduce) {
     .fracture-strike { animation: none; }
