@@ -99,6 +99,15 @@ body {
   .quiet:focus { border-bottom-color: var(--accent); }
   .quiet:hover  { border-bottom-color: var(--accent-dim); }
 
+  /* disclosure triangles are the browser's; we supply our own affordance */
+  summary { @apply cursor-pointer list-none; }
+  summary::-webkit-details-marker { display: none; }
+
+  .disclosure {
+    @apply inline-flex items-center gap-1.5 text-sm text-muted transition-colors;
+  }
+  .disclosure:hover { color: var(--accent); }
+
   /* navbar actions: icon only, no border */
   .nav-icon {
     @apply inline-flex h-9 w-9 items-center justify-center text-muted transition-colors;
