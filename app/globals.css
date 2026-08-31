@@ -1,51 +1,90 @@
 @import "tailwindcss";
 
-/* Theme tokens point at plain custom properties, so the palette can be swapped
-   in a media query while Tailwind still generates border-line / text-muted /
-   bg-bg utilities from them. */
 @theme {
   --color-bg: var(--bg);
+  --color-surface: var(--surface);
   --color-fg: var(--fg);
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-accent: var(--accent);
+  --color-cyan: var(--cyan);
+  --color-danger: var(--danger);
+  --font-display: var(--font-chakra), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* Committed to the dark look — the palette only reads as itself on black. */
 :root {
-  --bg: #ffffff;
-  --fg: #18181b;
-  --muted: #71717a;
-  --line: #e4e4e7;
-  --accent: #3f3f46;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b0b0d;
-    --fg: #e8e8ea;
-    --muted: #8b8b93;
-    --line: #26262b;
-    --accent: #d4d4d8;
-  }
+  --bg: #0a0a0c;
+  --surface: #101016;
+  --fg: #e6e6ea;
+  --muted: #7d7d8c;
+  --line: #1e1e28;
+  --accent: #fcee0a;   /* the yellow */
+  --cyan: #00e5ff;
+  --danger: #ff2a6d;
+  color-scheme: dark;
 }
 
 body {
-  background: var(--color-bg);
-  color: var(--color-fg);
+  background: var(--bg);
+  color: var(--fg);
+  /* barely-there grid; reads as texture, not decoration */
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: 56px 56px;
+  background-position: -1px -1px;
 }
 
+::selection { background: var(--accent); color: #0a0a0c; }
+
 @layer components {
-  .field {
-    @apply w-full rounded border border-line bg-transparent px-2 py-1.5 text-sm
-           outline-none focus:border-accent;
-  }
+  /* the angular corner cut, cyberpunk's one true shape */
+  .clip,
   .btn {
-    @apply rounded border border-line px-3 py-1.5 text-sm hover:border-accent
-           disabled:opacity-50;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
   }
+
+  .field {
+    @apply w-full border border-line bg-surface px-2.5 py-1.5 text-sm outline-none
+           transition-colors;
+    border-left-width: 2px;
+  }
+  .field:focus {
+    border-left-color: var(--accent);
+    background: #14141b;
+  }
+  .field::placeholder { color: var(--muted); }
+
+  .btn {
+    @apply border border-line bg-surface px-3 py-1.5 text-sm font-medium tracking-wide
+           transition-colors disabled:opacity-50;
+    font-family: var(--font-display);
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-primary { border-color: var(--accent); color: var(--accent); }
+  .btn-primary:hover { background: var(--accent); color: #0a0a0c; }
+
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full border border-line px-2 py-0.5
-           text-xs text-muted;
+    @apply inline-flex items-center gap-1 border border-line bg-surface px-2 py-0.5
+           text-[11px] uppercase tracking-wider text-muted;
+    font-family: var(--font-display);
   }
-  .label { @apply text-xs uppercase tracking-wide text-muted; }
+  .chip-accent { border-color: color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent); }
+  .chip-cyan   { border-color: color-mix(in srgb, var(--cyan) 45%, transparent);   color: var(--cyan); }
+
+  .label {
+    @apply text-[11px] uppercase tracking-[0.18em] text-muted;
+    font-family: var(--font-display);
+  }
+  /* the small tick that turns a heading into a system label */
+  .label::before { content: "// "; color: var(--accent); opacity: 0.7; }
+
+  .card {
+    @apply border-l-2 border-line pl-3 transition-colors;
+  }
+  .card:hover { border-left-color: var(--accent); }
+
+  mark { background: color-mix(in srgb, var(--accent) 25%, transparent); color: var(--fg); }
 }

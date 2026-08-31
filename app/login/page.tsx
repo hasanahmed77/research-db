@@ -27,10 +27,10 @@ export default async function Login({
   const { error } = await searchParams;
   return (
     <div className="mx-auto mt-16 max-w-sm space-y-4">
-      <h1 className="text-lg font-medium">Sign in</h1>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      <h1 className="font-display text-xl font-semibold tracking-wide">Sign in</h1>
+      {error && <p className="border border-danger/50 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
       <form action={signInWithGoogle}>
-        <button className="btn w-full">Continue with Google</button>
+        <button className="btn btn-primary w-full">Continue with Google</button>
       </form>
     </div>
   );

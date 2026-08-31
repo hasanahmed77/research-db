@@ -3,7 +3,7 @@ import { createPaper } from "@/app/actions";
 export default function NewPaper() {
   return (
     <form action={createPaper} className="max-w-2xl space-y-3">
-      <h1 className="text-lg font-medium">Add a paper</h1>
+      <h1 className="font-display text-xl font-semibold tracking-wide">Add a paper</h1>
       <input className="field" name="title" placeholder="title" required autoFocus />
       <textarea className="field" name="abstract" rows={4} placeholder="abstract" />
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -17,7 +17,7 @@ export default function NewPaper() {
         <input type="checkbox" name="is_stub" />
         stub — a reference I have not read, kept only for the citation graph
       </label>
-      <button className="btn">Add</button>
+      <button className="btn btn-primary">Add</button>
     </form>
   );
 }

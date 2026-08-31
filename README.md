@@ -88,6 +88,12 @@ remote project, so seeding them there would leave production with no prompts.
 Next.js 16 (App Router) + Tailwind 4. Reads go through server components, writes through server
 actions; there is no client data layer and no API routes beyond sign-out.
 
+Dark only — the palette (Cyberpunk 2077's yellow `#fcee0a`, cyan, magenta on near-black) only
+reads as itself on black, so there is no light variant. Restraint is deliberate: colour carries
+meaning rather than decoration — yellow for the primary action and for `read`, cyan for `reading`
+and for interpretive links, magenta for errors. Chakra Petch on headings and labels, system sans
+for anything you actually have to read at length.
+
 ```bash
 cp .env.local.example .env.local   # fill in project URL + publishable key
 npm install

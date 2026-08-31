@@ -86,7 +86,9 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
         <h2 className="label">Reading questions</h2>
         {(prompts ?? []).map((p) => (
           <div key={p.id} className="space-y-1.5">
-            <h3 className="text-sm font-medium">{p.ord}. {p.title}</h3>
+            <h3 className="font-display text-sm font-semibold tracking-wide">
+              <span className="text-accent">{String(p.ord).padStart(2, "0")}</span> {p.title}
+            </h3>
             {p.guidance && <p className="text-xs leading-relaxed text-muted">{p.guidance}</p>}
             <AutoSave action={saveNote} hidden={{ paper_id: id, prompt_id: p.id }} name="body"
                       as="textarea" rows={4} defaultValue={noteBy.get(p.id) ?? ""} />
@@ -121,7 +123,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
           <select className="field w-40" name="role">
             {TAG_ROLES.map((r) => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}
           </select>
-          <button className="btn">add</button>
+          <button className="btn btn-primary">add</button>
         </form>
       </section>
 
@@ -130,7 +132,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
         <ul className="space-y-1 text-sm">
           {neighbours.map((n, i) => (
             <li key={i} className="flex items-center gap-2">
-              <span className="chip">{n.rel.replace(/_/g, " ")} {n.dir}</span>
+              <span className={`chip ${n.rel === "cites" ? "" : "chip-cyan"}`}>{n.rel.replace(/_/g, " ")} {n.dir}</span>
               <Link href={`/papers/${n.otherId}`} className="hover:underline">{n.title}</Link>
               <form action={removeEdge}>
                 <input type="hidden" name="from_id" value={n.from} />
@@ -156,7 +158,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
             ))}
           </datalist>
           <input className="field w-56" name="note" placeholder="why (optional)" />
-          <button className="btn">link</button>
+          <button className="btn btn-primary">link</button>
         </form>
       </section>
 
@@ -164,7 +166,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
         <h2 className="label">Excerpts</h2>
         <ul className="space-y-2 text-sm">
           {(excerpts ?? []).map((e) => (
-            <li key={e.id} className="border-l-2 border-line pl-3">
+            <li key={e.id} className="card">
               <p>“{e.quote}”{e.page && <span className="text-muted"> — p.{e.page}</span>}</p>
               {e.comment && <p className="text-muted">{e.comment}</p>}
               <form action={deleteExcerpt}>
@@ -180,7 +182,7 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
           <input className="field w-16" name="page" placeholder="p." inputMode="numeric" />
           <input className="field flex-1 min-w-64" name="quote" placeholder="quote" required />
           <input className="field w-56" name="comment" placeholder="comment" />
-          <button className="btn">add</button>
+          <button className="btn btn-primary">add</button>
         </form>
       </section>
     </div>

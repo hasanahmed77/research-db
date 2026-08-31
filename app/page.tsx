@@ -2,6 +2,10 @@ import Link from "next/link";
 import { supabaseServer } from "@/lib/supabase/server";
 import { STATUSES, type PaperCard } from "@/lib/types";
 
+/** read = done, reading = in flight; everything else stays quiet */
+const statusChip = (s: string) =>
+  s === "read" ? "chip chip-accent" : s === "reading" ? "chip chip-cyan" : "chip";
+
 type Search = { q?: string; status?: string; from?: string; to?: string; stubs?: string };
 
 export default async function Library({ searchParams }: { searchParams: Promise<Search> }) {
@@ -57,15 +61,18 @@ export default async function Library({ searchParams }: { searchParams: Promise<
         <label className="chip cursor-pointer">
           <input type="checkbox" name="stubs" value="1" defaultChecked={includeStubs} /> stubs
         </label>
-        <button className="btn">search</button>
+        <button className="btn btn-primary">search</button>
       </form>
 
       <p className="label">{cards.length} paper{cards.length === 1 ? "" : "s"}</p>
 
       <ul className="divide-y divide-line border-y border-line">
         {cards.map((p) => (
-          <li key={p.id} className="py-3">
-            <Link href={`/papers/${p.id}`} className="font-medium hover:underline">{p.title}</Link>
+          <li key={p.id} className="card py-3">
+            <Link href={`/papers/${p.id}`}
+                  className="font-display font-semibold tracking-wide transition-colors hover:text-accent">
+              {p.title}
+            </Link>
             <p className="mt-0.5 text-sm text-muted">
               {[p.authors?.join(", "), p.venue, p.year].filter(Boolean).join(" · ")}
             </p>
@@ -74,7 +81,9 @@ export default async function Library({ searchParams }: { searchParams: Promise<
                  dangerouslySetInnerHTML={{ __html: snippets.get(p.id)! }} />
             )}
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              <span className="chip">{p.is_stub ? "stub" : p.status.replace("_", " ")}</span>
+              <span className={statusChip(p.is_stub ? "stub" : p.status)}>
+                {p.is_stub ? "stub" : p.status.replace("_", " ")}
+              </span>
               <span className="chip">notes {p.notes_filled}/{p.notes_total}</span>
               {p.cites_out > 0 && <span className="chip">cites {p.cites_out}</span>}
               {p.cited_by > 0 && <span className="chip">cited by {p.cited_by}</span>}
