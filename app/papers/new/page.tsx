@@ -49,20 +49,30 @@ export default async function NewPaper() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="label">First link <span className="normal-case opacity-60">(optional)</span></h2>
+        <h2 className="label">Links <span className="normal-case opacity-60">(optional)</span></h2>
         <div className="flex flex-wrap items-center gap-2">
           <select className="field w-40" name="edge_kind">
             <option value="cites">cites</option>
             {LINK_TYPES.map((k) => <option key={k} value={k}>{k.replace(/_/g, " ")}</option>)}
           </select>
-          <select className="field flex-1 min-w-64" name="to_id" defaultValue="">
-            <option value="">no link yet</option>
-            {(papers ?? []).map((p) => (
-              <option key={p.id} value={p.id}>{p.title}</option>
-            ))}
-          </select>
-          <input className="field w-56" name="note" placeholder="why" />
+          <input className="field flex-1 min-w-56" name="note" placeholder="why (applies to all ticked)" />
         </div>
+
+        {(papers ?? []).length === 0 ? (
+          <p className="text-sm text-muted">
+            Nothing to link to yet — this is your first paper.
+          </p>
+        ) : (
+          <div className="max-h-56 space-y-1 overflow-y-auto border border-line bg-surface p-2">
+            {(papers ?? []).map((p) => (
+              <label key={p.id}
+                     className="flex cursor-pointer items-center gap-2 px-1 py-0.5 text-sm hover:text-accent">
+                <input type="checkbox" name="to_ids" value={p.id} />
+                {p.title}
+              </label>
+            ))}
+          </div>
+        )}
       </section>
 
       <button className="btn">Add</button>

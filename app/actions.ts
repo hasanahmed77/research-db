@@ -57,16 +57,23 @@ async function applyTags(db: Db, paper_id: string, names: string[], kind: string
   return error ? { ok: false, message: error.message } : { ok: true };
 }
 
-/** Both ends must already exist; the picker only offers papers in the library. */
-async function applyEdge(
-  db: Db, from_id: string, to_id: string, kind: string, note: string | null,
+/**
+ * Both ends must already exist; the pickers only offer papers in the library.
+ * Every target of one relation goes in a single upsert, so linking eight
+ * references costs one write rather than eight.
+ */
+async function applyEdges(
+  db: Db, from_id: string, to_ids: string[], kind: string, note: string | null,
 ) {
-  if (!to_id || to_id === from_id) return { ok: true };
+  const targets = [...new Set(to_ids)].filter((t) => t && t !== from_id);
+  if (!targets.length) return { ok: true };
 
   const { error } =
     kind === "cites"
-      ? await db.from("citations").upsert({ citing_id: from_id, cited_id: to_id, note })
-      : await db.from("paper_links").upsert({ from_id, to_id, kind, note });
+      ? await db.from("citations").upsert(
+          targets.map((cited_id) => ({ citing_id: from_id, cited_id, note })))
+      : await db.from("paper_links").upsert(
+          targets.map((to_id) => ({ from_id, to_id, kind, note })));
   return error ? { ok: false, message: error.message } : { ok: true };
 }
 
@@ -98,9 +105,9 @@ export async function createPaper(fd: FormData) {
     await applyTags(supabase, data.id, tagNames(tagName), "topic", "about");
   }
 
-  const to_id = str(fd, "to_id");
-  if (to_id) {
-    await applyEdge(supabase, data.id, to_id, str(fd, "edge_kind") ?? "cites", str(fd, "note"));
+  const toIds = fd.getAll("to_ids").filter((v): v is string => typeof v === "string");
+  if (toIds.length) {
+    await applyEdges(supabase, data.id, toIds, str(fd, "edge_kind") ?? "cites", str(fd, "note"));
   }
 
   redirect(`/papers/${data.id}`);
@@ -183,7 +190,7 @@ export async function addEdge(fd: FormData) {
   if (!from_id || !to_id || !kind) return;
 
   const supabase = await supabaseServer();
-  await applyEdge(supabase, from_id, to_id, kind, str(fd, "note"));
+  await applyEdges(supabase, from_id, [to_id], kind, str(fd, "note"));
   revalidatePath(`/papers/${from_id}`);
 }
 
