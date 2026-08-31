@@ -8,7 +8,7 @@ export function PdfUpload({
   paperId, action,
 }: {
   paperId: string;
-  action: (fd: FormData) => Promise<void>;
+  action: (fd: FormData) => Promise<{ ok: boolean; message?: string }>;
 }) {
   const [state, setState] = useState<"idle" | "busy" | string>("idle");
 

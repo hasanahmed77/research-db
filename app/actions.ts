@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 
+export type SaveResult = { ok: boolean; message?: string };
+
 /** Fields the generic paper editor is allowed to write. */
 const EDITABLE = new Set([
   "title", "abstract", "year", "doi", "arxiv_id", "url", "bibtex",
@@ -39,10 +41,10 @@ export async function createPaper(fd: FormData) {
   redirect(`/papers/${data.id}`);
 }
 
-export async function updatePaper(fd: FormData) {
+export async function updatePaper(fd: FormData): Promise<SaveResult> {
   const id = str(fd, "id");
   const field = str(fd, "field");
-  if (!id || !field || !EDITABLE.has(field)) return;
+  if (!id || !field || !EDITABLE.has(field)) return { ok: false, message: "bad field" };
 
   const raw = fd.get("value");
   let value: string | number | boolean | null =
@@ -52,24 +54,40 @@ export async function updatePaper(fd: FormData) {
 
   const supabase = await supabaseServer();
   const { error } = await supabase.from("papers").update({ [field]: value }).eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: error.message };
   // only the pdf changes what gets rendered (signed URL + the open-pdf button)
   if (field === "pdf_path") revalidatePath(`/papers/${id}`);
+  return { ok: true };
 }
 
-export async function saveNote(fd: FormData) {
-  const paper_id = str(fd, "paper_id");
-  const prompt_id = str(fd, "prompt_id");
-  if (!paper_id || !prompt_id) return;
-
+/**
+ * One round trip for the whole writing surface: every changed answer plus the
+ * summary. Called from a single coordinator on the client, so a typing session
+ * produces one write per pause rather than one per field.
+ */
+export async function saveNotes(
+  paperId: string,
+  notes: { prompt_id: string; body: string }[],
+  summary?: string | null,
+): Promise<SaveResult> {
   const supabase = await supabaseServer();
-  const { error } = await supabase
-    .from("paper_notes")
-    .upsert({ paper_id, prompt_id, body: (fd.get("body") as string) ?? "" }, { onConflict: "paper_id,prompt_id" });
-  if (error) throw new Error(error.message);
-  // deliberately no revalidatePath: re-rendering this page costs ~9 reads, and
-  // nothing on screen changes from saving the field you are typing in. The
-  // answered/unanswered split and the N/8 count settle on the next load.
+
+  if (notes.length) {
+    const { error } = await supabase.from("paper_notes").upsert(
+      notes.map((n) => ({ paper_id: paperId, prompt_id: n.prompt_id, body: n.body })),
+      { onConflict: "paper_id,prompt_id" },
+    );
+    if (error) return { ok: false, message: error.message };
+  }
+
+  if (summary !== undefined) {
+    const { error } = await supabase
+      .from("papers").update({ summary }).eq("id", paperId);
+    if (error) return { ok: false, message: error.message };
+  }
+
+  // no revalidatePath: re-rendering costs ~9 reads and nothing on screen changes
+  return { ok: true };
 }
 
 export async function addTag(fd: FormData) {

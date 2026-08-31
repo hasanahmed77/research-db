@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { AutoSave } from "@/components/AutoSave";
+import { NotesEditor } from "@/components/NotesEditor";
 import { PdfUpload } from "@/components/PdfUpload";
 import {
-  addEdge, addExcerpt, addTag, deleteExcerpt, removeEdge, removeTag, saveNote, updatePaper,
+  addEdge, addExcerpt, addTag, deleteExcerpt, removeEdge, removeTag, saveNotes, updatePaper,
 } from "@/app/actions";
 import { LINK_TYPES, STATUSES, TAG_KINDS, TAG_ROLES } from "@/lib/types";
 
@@ -29,7 +30,6 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
 
   const noteBy = new Map((notes ?? []).map((n) => [n.prompt_id, n.body]));
   const titleById = new Map((allPapers ?? []).map((p) => [p.id, p.title]));
-  const answered = (prompts ?? []).filter((p) => (noteBy.get(p.id) ?? "").trim()).length;
 
   type Edge = { source: string; target: string; rel: string };
   const neighbours = ((edges ?? []) as Edge[]).map((e) => {
@@ -76,48 +76,13 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
         </div>
       </section>
 
-      <section className="space-y-2">
-        <h2 className="label">Summary</h2>
-        <AutoSave action={updatePaper} hidden={{ id, field: "summary" }} name="value"
-                  as="textarea" rows={3} defaultValue={paper.summary ?? ""}
-                  placeholder="the paper in your own words" />
-      </section>
-
-      <section className="space-y-6">
-        <h2 className="label">Reading questions · {answered}/{(prompts ?? []).length}</h2>
-        {(prompts ?? []).map((p) => {
-          const body = (noteBy.get(p.id) ?? "").trim();
-          const editor = (
-            <>
-              {p.guidance && <p className="text-xs leading-relaxed text-muted">{p.guidance}</p>}
-              <AutoSave action={saveNote} hidden={{ paper_id: id, prompt_id: p.id }} name="body"
-                        as="textarea" rows={4} defaultValue={noteBy.get(p.id) ?? ""} />
-            </>
-          );
-          return (
-            <div key={p.id} className="space-y-2">
-              <h3 className="font-display text-sm font-semibold tracking-wide">
-                <span className={body ? "text-accent" : "text-muted"}>
-                  {String(p.ord).padStart(2, "0")}
-                </span>{" "}
-                {p.title}
-              </h3>
-              {/* answered questions read as prose; the editor is one click away */}
-              {body ? (
-                <>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">{body}</p>
-                  <details>
-                    <summary className="disclosure text-xs">edit</summary>
-                    <div className="space-y-2 pt-2">{editor}</div>
-                  </details>
-                </>
-              ) : (
-                <div className="space-y-2">{editor}</div>
-              )}
-            </div>
-          );
-        })}
-      </section>
+      <NotesEditor
+        paperId={id}
+        prompts={(prompts ?? []).map((p) => ({ id: p.id, ord: p.ord, title: p.title, guidance: p.guidance }))}
+        initialNotes={Object.fromEntries((prompts ?? []).map((p) => [p.id, noteBy.get(p.id) ?? ""]))}
+        initialSummary={paper.summary ?? ""}
+        action={saveNotes}
+      />
 
       <section className="space-y-3">
         <h2 className="label">Tags</h2>

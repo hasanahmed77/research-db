@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { SaveResult } from "@/app/actions";
 
-type Action = (fd: FormData) => Promise<void>;
+type Action = (fd: FormData) => Promise<SaveResult>;
 
 /**
  * Wraps one field in its own form and submits it on blur (or on change, for a
@@ -27,7 +28,9 @@ export function AutoSave({
   const form = useRef<HTMLFormElement>(null);
   const dirty = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inFlight = useRef(false);
   const [saved, setSaved] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!saved) return;
@@ -42,12 +45,29 @@ export function AutoSave({
     return () => window.removeEventListener("beforeunload", warn);
   }, []);
 
-  const commit = () => {
+  // call the action directly rather than requestSubmit(): fire-and-forget cannot
+  // tell success from failure, which made "saved" a guess and dropped failed writes
+  const commit = async () => {
     if (timer.current) { clearTimeout(timer.current); timer.current = null; }
-    if (!dirty.current) return;
-    dirty.current = false;
-    form.current?.requestSubmit();
-    setSaved(true);
+    if (!dirty.current || !form.current || inFlight.current) return;
+
+    const fd = new FormData(form.current);
+    inFlight.current = true;
+    let res: SaveResult;
+    try {
+      res = await action(fd);
+    } catch (e) {
+      res = { ok: false, message: e instanceof Error ? e.message : "request failed" };
+    }
+    inFlight.current = false;
+
+    if (res.ok) {
+      dirty.current = false;   // only clean once the server accepted it
+      setFailed(false);
+      setSaved(true);
+    } else {
+      setFailed(true);         // stays dirty, so the next blur or pause retries
+    }
   };
 
   // blur alone loses a long answer if the tab closes mid-sentence; save on a pause too
@@ -68,7 +88,8 @@ export function AutoSave({
   };
 
   return (
-    <form ref={form} action={action}
+    <form ref={form}
+          onSubmit={(e) => { e.preventDefault(); void commit(); }}
           className={label ? "relative flex items-center gap-1.5" : "relative"}>
       {label && <span className="text-sm text-muted">{label}</span>}
       {Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
@@ -79,9 +100,10 @@ export function AutoSave({
           {options?.map((o) => <option key={o} value={o}>{o.replace(/_/g, " ")}</option>)}
         </select>
       )}
-      {saved && (
-        <span className="pointer-events-none absolute right-2 top-1.5 text-xs text-muted">
-          saved
+      {(saved || failed) && (
+        <span className={`pointer-events-none absolute right-2 top-1.5 text-xs ${
+          failed ? "text-danger" : "text-muted"}`}>
+          {failed ? "not saved" : "saved"}
         </span>
       )}
     </form>
