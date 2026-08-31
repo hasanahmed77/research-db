@@ -158,25 +158,46 @@ export function TreeGraph({
     const flat = [...placed.values()];
     if (!flat.length) return null;
 
-    const width = Math.max(
-      Math.max(...flat.map((n) => n.x)) + LABEL_W + PAD,
-      column * COL + PAD * 2,
-      560,
-    );
-    const height = Math.max(...flat.map((n) => n.y)) + PAD + 24;
-    return { flat, roots, cross, byNode: placed, width, height, loners: loners.length, lonerTop };
+    // The true ink extent, labels included — centring the canvas box instead
+    // left the drawing off to one side, because the box carries label slack on
+    // the right that the left never uses.
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const n of flat) {
+      const side = n.x - n.anchorX;
+      const middle = Math.abs(side) < 1;
+      const left = middle ? LABEL_W / 2 : side < 0 ? LABEL_W : R;
+      const right = middle ? LABEL_W / 2 : side > 0 ? LABEL_W : R;
+      const up = R + (middle && n.children.length > 0 ? 22 : 0);
+      const down = R + (middle && n.children.length === 0 ? 22 : 0);
+      minX = Math.min(minX, n.x - left);
+      maxX = Math.max(maxX, n.x + right);
+      minY = Math.min(minY, n.y - up);
+      maxY = Math.max(maxY, n.y + down);
+    }
+    if (loners.length) minY = Math.min(minY, lonerTop - ROW / 2 - 20);
+
+    return {
+      flat, roots, cross, byNode: placed, loners: loners.length, lonerTop,
+      bounds: { minX, maxX, minY, maxY, w: maxX - minX, h: maxY - minY },
+    };
   }, [papers, adj]);
 
   const clip = (t: string, n = 22) => (t.length > n ? t.slice(0, n) + "…" : t);
 
-  /** Scale the drawing to the pane and centre it. */
+  /** Scale the drawing to the pane and centre it on its own ink, not on the canvas. */
   const fit = useCallback(() => {
     const el = svgRef.current;
     if (!el || !graph) return;
     const { width: vw, height: vh } = el.getBoundingClientRect();
     if (!vw || !vh) return;
-    const k = Math.min(1, Math.min(vw / graph.width, vh / graph.height));
-    setView({ k, x: (vw - graph.width * k) / 2, y: (vh - graph.height * k) / 2 });
+    const { minX, minY, w, h } = graph.bounds;
+    const margin = 24;
+    const k = Math.min(1, (vw - margin * 2) / w, (vh - margin * 2) / h);
+    setView({
+      k,
+      x: (vw - w * k) / 2 - minX * k,
+      y: (vh - h * k) / 2 - minY * k,
+    });
   }, [graph]);
 
   useEffect(() => { fit(); }, [fit]);
