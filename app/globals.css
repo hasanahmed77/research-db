@@ -49,29 +49,29 @@ body {
      the sign-in column contains a backdrop-filter that would otherwise be
      recomposited against a moving backdrop every frame. */
   @keyframes slide-from-left {
-    from { opacity: 0; transform: translate3d(-72px, 0, 0); }
+    from { opacity: 0; transform: translate3d(-56px, 0, 0); }
     to   { opacity: 1; transform: translate3d(0, 0, 0); }
   }
   @keyframes slide-from-right {
-    from { opacity: 0; transform: translate3d(72px, 0, 0); }
+    from { opacity: 0; transform: translate3d(56px, 0, 0); }
     to   { opacity: 1; transform: translate3d(0, 0, 0); }
   }
   /* One hit and a decay. A fast rise then a fall away, with no second flash.
      Runs once, alongside the entrance slides.
      Timed so the peak lands exactly as the entrance ends. The last column
-     finishes at 920ms (0.12s delay + 0.8s travel) and the flash peaks 80ms in
-     (8% of 1s), so the delay is 840ms. Move the peak keyframe or the slide
+     finishes at 530ms (0.08s delay + 0.45s travel) and the flash peaks 50ms in
+     (10% of 0.5s), so the delay is 480ms. Move the peak keyframe or the slide
      timing and this needs recomputing. */
   @keyframes fracture-strike {
     0%   { opacity: 0; }
-    8%   { opacity: 0.85; }
-    30%  { opacity: 0.3; }
-    60%  { opacity: 0.08; }
+    10%  { opacity: 0.85; }
+    35%  { opacity: 0.3; }
+    65%  { opacity: 0.08; }
     100% { opacity: 0; }
   }
   .fracture-strike {
     opacity: 0;
-    animation: fracture-strike 1s linear 0.84s 1 both;
+    animation: fracture-strike 0.5s linear 0.48s 1 both;
   }
   @media (prefers-reduced-motion: reduce) {
     .fracture-strike { animation: none; }
@@ -92,19 +92,19 @@ body {
     will-change: transform, opacity;
   }
   .slide-from-top {
-    animation: slide-from-top 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation: slide-from-top 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
   }
   .slide-from-bottom {
-    animation: slide-from-bottom 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation: slide-from-bottom 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
   }
   /* An expo curve covered two thirds of the distance in the first sixth of the
      time, which reads as a dart followed by a crawl. This one spends its time
      more evenly, so the movement is legible the whole way. */
   .slide-from-left {
-    animation: slide-from-left 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation: slide-from-left 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
   }
   .slide-from-right {
-    animation: slide-from-right 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.12s both;
+    animation: slide-from-right 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.08s both;
   }
   @media (prefers-reduced-motion: reduce) {
     .slide-from-left, .slide-from-right,
