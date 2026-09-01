@@ -49,18 +49,18 @@ body {
      the sign-in column contains a backdrop-filter that would otherwise be
      recomposited against a moving backdrop every frame. */
   @keyframes slide-from-left {
-    from { opacity: 0; transform: translate3d(-56px, 0, 0); }
+    from { opacity: 0; transform: translate3d(-40px, 0, 0); }
     to   { opacity: 1; transform: translate3d(0, 0, 0); }
   }
   @keyframes slide-from-right {
-    from { opacity: 0; transform: translate3d(56px, 0, 0); }
+    from { opacity: 0; transform: translate3d(40px, 0, 0); }
     to   { opacity: 1; transform: translate3d(0, 0, 0); }
   }
   /* One hit and a decay. A fast rise then a fall away, with no second flash.
      Runs once, alongside the entrance slides.
      Timed so the peak lands exactly as the entrance ends. The last column
-     finishes at 530ms (0.08s delay + 0.45s travel) and the flash peaks 50ms in
-     (10% of 0.5s), so the delay is 480ms. Move the peak keyframe or the slide
+     finishes at 330ms (0.05s delay + 0.28s travel) and the flash peaks 35ms in
+     (10% of 0.35s), so the delay is 295ms. Move the peak keyframe or the slide
      timing and this needs recomputing. */
   @keyframes fracture-strike {
     0%   { opacity: 0; }
@@ -71,7 +71,7 @@ body {
   }
   .fracture-strike {
     opacity: 0;
-    animation: fracture-strike 0.5s linear 0.48s 1 both;
+    animation: fracture-strike 0.35s linear 0.295s 1 both;
   }
   @media (prefers-reduced-motion: reduce) {
     .fracture-strike { animation: none; }
@@ -92,19 +92,19 @@ body {
     will-change: transform, opacity;
   }
   .slide-from-top {
-    animation: slide-from-top 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation: slide-from-top 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
   }
   .slide-from-bottom {
-    animation: slide-from-bottom 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation: slide-from-bottom 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
   }
   /* An expo curve covered two thirds of the distance in the first sixth of the
      time, which reads as a dart followed by a crawl. This one spends its time
      more evenly, so the movement is legible the whole way. */
   .slide-from-left {
-    animation: slide-from-left 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation: slide-from-left 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
   }
   .slide-from-right {
-    animation: slide-from-right 0.45s cubic-bezier(0.4, 0, 0.2, 1) 0.08s both;
+    animation: slide-from-right 0.28s cubic-bezier(0.4, 0, 0.2, 1) 0.05s both;
   }
   @media (prefers-reduced-motion: reduce) {
     .slide-from-left, .slide-from-right,
