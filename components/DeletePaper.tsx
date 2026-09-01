@@ -2,12 +2,14 @@
 
 /** Deletion cascades and cannot be undone, so it asks first. */
 export function DeletePaper({
-  id, title, action, className = "",
+  id, title, action, className = "", redirectTo,
 }: {
   id: string;
   title: string;
   action: (fd: FormData) => Promise<void>;
   className?: string;
+  /** Where to go afterwards. Omit when the list can simply re-render in place. */
+  redirectTo?: string;
 }) {
   return (
     <form
@@ -21,6 +23,7 @@ export function DeletePaper({
       }}
     >
       <input type="hidden" name="id" value={id} />
+      {redirectTo && <input type="hidden" name="redirectTo" value={redirectTo} />}
       <button className="icon-danger" aria-label={`Delete ${title}`} title="Delete this paper">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">

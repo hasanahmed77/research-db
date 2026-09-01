@@ -129,8 +129,16 @@ export async function deletePaper(fd: FormData) {
   const { error } = await supabase.from("papers").delete().eq("id", id);
   if (error) throw new Error(error.message);
 
-  revalidatePath("/");
-  redirect("/");
+  // "layout" rather than the default: a deleted paper also changes the graph
+  // and any other paper that linked to it, not just the library list.
+  revalidatePath("/", "layout");
+
+  // Only redirect when the page we came from no longer exists. Redirecting to
+  // "/" from the library itself is a navigation to the page you are already on,
+  // which the router treats as a no-op and serves from its cache, so the row
+  // stays on screen.
+  const to = str(fd, "redirectTo");
+  if (to) redirect(to);
 }
 
 export async function updatePaper(fd: FormData): Promise<SaveResult> {

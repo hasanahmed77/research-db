@@ -70,7 +70,8 @@ export default async function PaperPage({ params }: { params: Promise<{ id: stri
           <div className="flex-1">
             <EditableTitle id={id} initial={paper.title} action={updatePaper} />
           </div>
-          <DeletePaper id={id} title={paper.title} action={deletePaper} className="pt-1" />
+          <DeletePaper id={id} title={paper.title} action={deletePaper} className="pt-1"
+                       redirectTo="/" />
         </div>
         <p className="text-sm text-muted">
           {[(authors ?? []).map((a) => (a.authors as unknown as { name: string } | null)?.name).filter(Boolean).join(", "),
